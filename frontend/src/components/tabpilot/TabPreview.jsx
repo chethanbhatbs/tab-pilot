@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { getDomain, getFaviconUrl, handleFaviconError, handleFaviconLoad } from '@/utils/grouping';
+import { getDomain, getFaviconUrl, handleFaviconError } from '@/utils/grouping';
 import { Pin, Volume2, Pause, StickyNote } from 'lucide-react';
 
 export function TabPreview({ tab, suspended, tabNote, anchorRect, onClose }) {
@@ -57,7 +57,7 @@ export function TabPreview({ tab, suspended, tabNote, anchorRect, onClose }) {
           <div className="flex flex-col items-center gap-1">
             {faviconUrl && (
               <img src={faviconUrl} alt="" className="w-6 h-6 rounded-lg shadow-lg"
-                data-tab-url={tab.url} data-chrome-favicon={tab.favIconUrl || ''} onLoad={handleFaviconLoad} onError={handleFaviconError} />
+                data-tab-url={tab.url} data-chrome-favicon={tab.favIconUrl || ''} onError={handleFaviconError} />
             )}
             <span className="text-[11px] text-white/60 font-mono">{domain}</span>
           </div>

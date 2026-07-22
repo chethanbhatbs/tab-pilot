@@ -2,7 +2,7 @@ import { findDuplicates, normalizeUrl } from '@/utils/grouping';
 import { AlertTriangle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { getFaviconUrl, getDomain, handleFaviconError, handleFaviconLoad } from '@/utils/grouping';
+import { getFaviconUrl, getDomain, handleFaviconError } from '@/utils/grouping';
 import { useState } from 'react';
 
 export function DuplicatePanel({ allTabs, duplicates: duplicatesProp, onCloseDuplicates, onCloseTab }) {
@@ -45,7 +45,7 @@ export function DuplicatePanel({ allTabs, duplicates: duplicatesProp, onCloseDup
               return (
                 <div key={url} className="rounded-md bg-background/50 p-2">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <img src={favicon} alt="" className="w-3.5 h-3.5 rounded-[2px] shrink-0" data-tab-url={url} data-chrome-favicon={tabs[0]?.favIconUrl || ''} onLoad={handleFaviconLoad} onError={handleFaviconError} />
+                    <img src={favicon} alt="" className="w-3.5 h-3.5 rounded-[2px] shrink-0" data-tab-url={url} data-chrome-favicon={tabs[0]?.favIconUrl || ''} onError={handleFaviconError} />
                     <span className="text-[10px] text-muted-foreground truncate font-body">{domain}</span>
                     <span className="text-[11px] font-mono text-tp-duplicate ml-auto">{tabs.length}x open</span>
                   </div>

@@ -1,4 +1,4 @@
-import { getDomain, getFaviconUrl, groupByDomain, handleFaviconError, handleFaviconLoad } from '@/utils/grouping';
+import { getDomain, getFaviconUrl, groupByDomain, handleFaviconError } from '@/utils/grouping';
 import { Globe, ChevronRight, Check, X, Pin, Volume2, Pause } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -96,7 +96,7 @@ function DomainGroup({
               />
             )}
             {showFavicons && faviconUrl ? (
-              <img src={faviconUrl} alt="" className="w-4 h-4 rounded-[3px] shrink-0" data-tab-url={tabs[0]?.url} data-chrome-favicon={tabs[0]?.favIconUrl || ''} onLoad={handleFaviconLoad} onError={handleFaviconError} />
+              <img src={faviconUrl} alt="" className="w-4 h-4 rounded-[3px] shrink-0" data-tab-url={tabs[0]?.url} data-chrome-favicon={tabs[0]?.favIconUrl || ''} onError={handleFaviconError} />
             ) : (
               <Globe size={12} className="text-muted-foreground/50 shrink-0" strokeWidth={1.5} />
             )}

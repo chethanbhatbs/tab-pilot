@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { getDomain, getFaviconUrl, handleFaviconError, getLetterAvatar } from '@/utils/grouping';
+import { getDomain, getFaviconUrl, handleFaviconError, handleFaviconLoad, getLetterAvatar } from '@/utils/grouping';
 import { Pin, Volume2, VolumeX, X, Loader2, Copy, GripVertical, Pause, Check, Star } from 'lucide-react';
 import {
   ContextMenu, ContextMenuContent, ContextMenuItem,
@@ -92,7 +92,7 @@ function TabItemImpl({
             ) : isSuspended ? (
               <Pause size={12} className="text-muted-foreground/40" strokeWidth={1.5} />
             ) : faviconUrl ? (
-              <img src={faviconUrl} alt="" className="w-4 h-4 rounded-[3px]" data-tab-url={tab.url} data-chrome-favicon={tab.favIconUrl || ''} onError={handleFaviconError} />
+              <img src={faviconUrl} alt="" className="w-4 h-4 rounded-[3px]" data-tab-url={tab.url} data-chrome-favicon={tab.favIconUrl || ''} onLoad={handleFaviconLoad} onError={handleFaviconError} />
             ) : (
               <div className="w-4 h-4 rounded-[3px] flex items-center justify-center text-[11px] font-bold"
                 style={{ background: avatar?.color.bg, color: avatar?.color.fg }}

@@ -65,6 +65,20 @@ img[data-tab-url] {
   filter: drop-shadow(0 0 0.5px rgba(255, 255, 255, 0.45));
 }
 
+/* Theme-variant favicons (handleFaviconLoad tags these by measured luminance):
+   a near-white icon gets a dark chip in light mode, a near-black icon gets a
+   light chip in dark mode — same way GitHub's own dark UI presents its logo. */
+:root:not(.dark) img.tp-favicon-light {
+  background: #343a43;
+  border-radius: 3px;
+  padding: 1.5px;
+}
+.dark img.tp-favicon-dark {
+  background: #e5e7eb;
+  border-radius: 3px;
+  padding: 1.5px;
+}
+
 /* Mark highlight style override */
 mark {
   background-color: rgba(76, 201, 240, 0.25);

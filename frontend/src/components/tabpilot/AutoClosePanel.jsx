@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Timer, Shield, Plus, X, AlertTriangle, Clock } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { getDomain, getFaviconUrl, handleFaviconError } from '@/utils/grouping';
+import { getDomain, getFaviconUrl, handleFaviconError, handleFaviconLoad } from '@/utils/grouping';
 
 const PRESETS = [
   { id: '15', label: '15 min', minutes: 15 },
@@ -226,7 +226,7 @@ export function AutoClosePanel({ allTabs, onClose, onAutoClose, settings, onUpda
                     className="w-3.5 h-3.5 rounded-[2px]"
                     data-tab-url={`https://${domain}`}
                     data-chrome-favicon=""
-                    onError={handleFaviconError}
+                    onLoad={handleFaviconLoad} onError={handleFaviconError}
                   />
                 </div>
                 <span className="text-[10px] font-body text-foreground/70 truncate">{domain}</span>
@@ -262,7 +262,7 @@ export function AutoClosePanel({ allTabs, onClose, onAutoClose, settings, onUpda
                     className="w-3.5 h-3.5 rounded-[2px]"
                     data-tab-url={tab.url}
                     data-chrome-favicon={tab.favIconUrl || ''}
-                    onError={handleFaviconError}
+                    onLoad={handleFaviconLoad} onError={handleFaviconError}
                   />
                 </div>
                 <span className="text-[10px] font-body truncate flex-1 text-foreground/70">{tab.title}</span>

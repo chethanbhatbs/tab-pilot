@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Flame, BarChart3, Hourglass, TrendingUp } from 'lucide-react';
 import { useHistoryData, useTimeSpent } from '@/hooks/useHistoryData';
 import { isExtensionContext } from '@/utils/chromeAdapter';
-import { getDomainFaviconUrl } from '@/utils/grouping';
+import { getDomainFaviconUrl, handleFaviconLoad } from '@/utils/grouping';
 
 // Format measured seconds as a readable duration. Real data only.
 function fmtDuration(s) {
@@ -252,6 +252,7 @@ function HeatmapContent({ historyData, timeData, timeFilter, setTimeFilter }) {
                   <img
                     src={getDomainFaviconUrl(d.domain)}
                     alt="" className="w-3.5 h-3.5 rounded-sm shrink-0"
+                    onLoad={handleFaviconLoad}
                     onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
                   />
                   <div className="flex-1 min-w-0">

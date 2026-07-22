@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getFaviconUrl, getLetterAvatar, handleFaviconError } from '@/utils/grouping';
+import { getFaviconUrl, getLetterAvatar, handleFaviconError, handleFaviconLoad } from '@/utils/grouping';
 
 export function FaviconWithFallback({ url, favIconUrl, className = 'w-4 h-4 rounded-[3px] shrink-0' }) {
   const resolvedSrc = getFaviconUrl(url, favIconUrl);
@@ -34,6 +34,7 @@ export function FaviconWithFallback({ url, favIconUrl, className = 'w-4 h-4 roun
       className={className}
       data-tab-url={url}
       data-chrome-favicon={favIconUrl || ''}
+      onLoad={handleFaviconLoad}
       onError={(e) => {
         handleFaviconError(e);
         // If the img is hidden by _showLetterAvatar, switch to React letter avatar

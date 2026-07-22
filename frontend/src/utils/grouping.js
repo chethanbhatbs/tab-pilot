@@ -51,6 +51,33 @@ export function getDomainFaviconUrl(domain, size = 32) {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
 }
 
+// Contrast guard: sites like GitHub serve theme-variant favicons, and Chrome
+// caches whichever one it saw — browse GitHub in dark mode and the cache holds
+// a near-white logo that vanishes on the light panel. _favicon images are
+// same-origin so we can read their pixels: when an icon is almost entirely
+// light (or dark), tag it and CSS backs it with a contrasting chip.
+export function handleFaviconLoad(e) {
+  const img = e.target;
+  try {
+    const s = 16;
+    const c = document.createElement('canvas');
+    c.width = s; c.height = s;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, s, s);
+    const { data } = ctx.getImageData(0, 0, s, s);
+    let n = 0, lum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 64) continue; // skip transparent pixels
+      n++;
+      lum += (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255;
+    }
+    if (n < 8) return; // too few opaque pixels to judge
+    const avg = lum / n;
+    img.classList.toggle('tp-favicon-light', avg > 0.8);
+    img.classList.toggle('tp-favicon-dark', avg < 0.2);
+  } catch { /* cross-origin canvas (web demo) — skip */ }
+}
+
 // Fallback chain: primary source (set by getFaviconUrl) → Chrome's reported
 // favIconUrl → letter avatar. The _favicon API itself falls back to a neutral
 // globe icon rather than erroring, so this rarely fires in the extension.

@@ -36,9 +36,9 @@ export function useChromeTabs() {
   const debounceRef = useRef(null);
   // Track lastAccessed ourselves — chrome.tabs.query() doesn't return it reliably
   const lastAccessedRef = useRef({});
-  // Signatures of the last applied state — used to skip no-op re-renders. The 5s
-  // poll fires constantly; without this the whole tree re-renders even when
-  // nothing changed, which is the main render cost at high tab counts.
+  // Signatures of the last applied state — used to skip no-op re-renders when a
+  // burst of tab events triggers refreshes that resolve to identical state,
+  // which is the main render cost at high tab counts.
   const winSigRef = useRef('');
   const groupSigRef = useRef('');
 
@@ -95,9 +95,12 @@ export function useChromeTabs() {
     // Track tab activation — chrome.tabs.query doesn't return lastAccessed reliably
     const onActivated = (info) => { lastAccessedRef.current[info.tabId] = Date.now(); };
     chrome.tabs.onActivated.addListener(onActivated);
-    // Reduced polling: 5s instead of 1s (events already trigger debounced refreshes)
-    const interval = setInterval(() => refreshRef.current?.(), 5000);
-    return () => { clearTimeout(t1); if (debounceRef.current) clearTimeout(debounceRef.current); cleanup(); chrome.tabs.onActivated.removeListener(onActivated); clearInterval(interval); };
+    // No polling: tab/window/group events (direct + background 'tabs-updated'
+    // messages) drive every refresh. Re-sync once when the panel becomes
+    // visible again, in case an event landed while it was hidden.
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshRef.current?.(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearTimeout(t1); if (debounceRef.current) clearTimeout(debounceRef.current); cleanup(); chrome.tabs.onActivated.removeListener(onActivated); document.removeEventListener('visibilitychange', onVisible); };
   }, [refresh]);
 
   // Merge stored window names into windows — stable sequential fallback names

@@ -393,6 +393,28 @@ export function chromeOnTabsUpdated(callback) {
 
 const NATIVE_HOST_NAME = 'com.tabpilot.profiles';
 
+// nativeMessaging is an OPTIONAL permission — nothing native is reachable until
+// the user explicitly grants it from the Profiles panel (keeps the install-time
+// permission warning small and the Chrome Web Store review clean).
+export async function chromeHasNativePermission() {
+  if (!IS_EXTENSION || !chrome?.permissions?.contains) return false;
+  try {
+    return await chrome.permissions.contains({ permissions: ['nativeMessaging'] });
+  } catch {
+    return false;
+  }
+}
+
+// Must be called from a user gesture (button click) or Chrome rejects it.
+export async function chromeRequestNativePermission() {
+  if (!IS_EXTENSION || !chrome?.permissions?.request) return false;
+  try {
+    return await chrome.permissions.request({ permissions: ['nativeMessaging'] });
+  } catch {
+    return false;
+  }
+}
+
 function sendNativeMessage(message) {
   if (!IS_EXTENSION || !chrome?.runtime?.sendNativeMessage) return Promise.resolve(null);
   const timeout = new Promise(resolve =>

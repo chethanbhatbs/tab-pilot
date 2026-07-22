@@ -32,6 +32,7 @@ echo "    JS:  $JS_FILE"
 echo "    CSS: $CSS_FILE"
 
 rm -rf "$EXT_SIDEPANEL/static" "$EXT_SIDEPANEL/asset-manifest.json" "$EXT_SIDEPANEL/index.html"
+mkdir -p "$EXT_SIDEPANEL"
 cp -r "$FRONTEND/build/static" "$EXT_SIDEPANEL/static"
 cp "$FRONTEND/build/asset-manifest.json" "$EXT_SIDEPANEL/asset-manifest.json"
 
@@ -42,9 +43,6 @@ cat > "$EXT_SIDEPANEL/index.html" << HTMLEOF
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Tab Pilot</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="./static/css/${CSS_FILE}" rel="stylesheet"/>
 </head>
 <body>
@@ -60,5 +58,5 @@ echo ""
 echo "  To install / update:"
 echo "  1. chrome://extensions/ -> Developer mode ON -> Load unpacked (first time)"
 echo "  2. After rebuilds, click the reload icon on the Tab Pilot card"
-echo "  3. Reload any open tabs so the content script re-injects"
+echo "  3. Reopen the side panel to pick up the new build"
 echo ""

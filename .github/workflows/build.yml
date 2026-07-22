@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      - name: Build extension
+        env:
+          CI: 'false' # CRA treats warnings as errors when CI=true
+        run: bash build-extension.sh
+
+      - name: Package extension zip (manifest at zip root — Chrome Web Store format)
+        working-directory: extension/tabpilot
+        run: zip -r ../../tab-pilot.zip . -x '*.DS_Store' -x 'README.md'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tab-pilot
+          path: tab-pilot.zip
+
+      - name: Attach zip to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tab-pilot.zip

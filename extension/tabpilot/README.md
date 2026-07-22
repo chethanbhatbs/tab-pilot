@@ -12,11 +12,11 @@ workspaces without digging through the sidebar.
 4. Click **Load unpacked** and select the `tabpilot/` folder
 5. The Tab Pilot icon appears in your toolbar
 6. Open the sidebar: `Ctrl+Shift+E` (Windows/Linux) or `Cmd+Shift+E` (Mac)
-7. Open the command center: `Ctrl+Shift+K` (Windows/Linux) or `Cmd+Shift+K` (Mac)
+7. `Ctrl+Shift+K` / `Cmd+Shift+K` also opens the side panel; press `Cmd+K` inside it for the command palette
 
 ## Features
 
-- **Command Center** — Search tabs and run actions from any page
+- **Command Palette** — Search tabs and run actions from the side panel (`Cmd+K`)
 - **Tab Tree** — All windows and tabs in a collapsible sidebar
 - **Fuzzy Search** — Find any tab instantly (`Cmd+K` or `Ctrl+K`)
 - **Workspaces** — Save and restore sets of tabs (`Ctrl+1/2/3`)

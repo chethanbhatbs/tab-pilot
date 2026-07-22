@@ -3,7 +3,8 @@ import { Users, ArrowRightLeft, AlertTriangle, RefreshCw, Check, ShieldCheck, Co
 import { toast } from 'sonner';
 import {
   isExtensionContext, chromeNativeHostPing, chromeGetProfiles, chromeSwitchProfile,
-  chromeStorageGet, chromeStorageSet, chromeCreateProfile
+  chromeStorageGet, chromeStorageSet, chromeCreateProfile,
+  chromeHasNativePermission, chromeRequestNativePermission,
 } from '@/utils/chromeAdapter';
 
 const MOCK_PROFILES = [
@@ -31,6 +32,7 @@ export function ProfilePanel() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hostAvailable, setHostAvailable] = useState(null);
+  const [needsPermission, setNeedsPermission] = useState(false);
   const [switching, setSwitching] = useState(null);
   const [currentProfile, setCurrentProfile] = useState(null);
   const [hiddenProfiles, setHiddenProfiles] = useState([]);
@@ -45,6 +47,15 @@ export function ProfilePanel() {
       setLoading(false);
       return;
     }
+
+    // nativeMessaging is optional — until the user grants it, don't even ping.
+    if (!(await chromeHasNativePermission())) {
+      setNeedsPermission(true);
+      setHostAvailable(false);
+      setLoading(false);
+      return;
+    }
+    setNeedsPermission(false);
 
     const pingResult = await chromeNativeHostPing();
     if (!pingResult || pingResult.error) {
@@ -137,6 +148,38 @@ export function ProfilePanel() {
     );
   }
 
+  // Optional permission not granted yet — profile switching is fully opt-in
+  if (needsPermission) {
+    return (
+      <div className="p-3 space-y-3" data-testid="profile-panel">
+        <Header />
+        <div className="rounded-lg border border-border/50 bg-card p-2.5 space-y-2.5">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck size={11} className="text-primary" strokeWidth={2} />
+            <span className="text-[11px] font-heading font-semibold text-foreground/90">Optional Feature</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
+            Switching Chrome profiles from Tab Pilot needs the <span className="font-mono">nativeMessaging</span> permission.
+            It is off by default and only ever talks to a small local helper you install yourself — nothing is requested until you enable it here.
+          </p>
+          <button
+            onClick={async () => {
+              const granted = await chromeRequestNativePermission();
+              if (granted) loadProfiles();
+              else toast.error('Permission not granted');
+            }}
+            className="cursor-pointer w-full h-7 text-[10px] font-heading font-semibold rounded-md
+              bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+            data-testid="profile-grant-permission-btn"
+          >
+            <Users size={10} strokeWidth={1.5} />
+            Enable profile switching
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Setup required
   if (!hostAvailable) {
     // The extension knows its own ID live — bake it into one universal command
@@ -174,7 +217,7 @@ export function ProfilePanel() {
           <div className="flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-primary/[0.04] border border-primary/10">
             <ShieldCheck size={11} className="text-primary shrink-0 mt-0.5" strokeWidth={2} />
             <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
-              <span className="font-semibold text-primary">100% Safe</span> — The script only reads Chrome's profile names (not passwords, history, or browsing data). It makes zero network requests. You can <a href="#" onClick={(e) => { e.preventDefault(); if (isExtensionContext()) chrome.tabs.create({ url: 'https://github.com/chethan-sudo/chrome-pilot/blob/main/native-host/tabpilot_profiles.py' }); }} className="underline text-primary/80 hover:text-primary">review the source code</a>.
+              <span className="font-semibold text-primary">100% Safe</span> — The script only reads Chrome's profile names (not passwords, history, or browsing data). It makes zero network requests. You can <a href="#" onClick={(e) => { e.preventDefault(); if (isExtensionContext()) chrome.tabs.create({ url: 'https://github.com/chethanbhatbs/tab-pilot/blob/main/native-host/tabpilot_profiles.py' }); }} className="underline text-primary/80 hover:text-primary">review the source code</a>.
             </p>
           </div>
 

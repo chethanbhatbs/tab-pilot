@@ -54,12 +54,12 @@ Pick the tabs you want to concentrate on and start a focus session. Focus Mode i
 - A lightweight periodic guard plus event listeners keep you on track; an always-visible Exit ends the session
 - Focus state persists across panel reloads and syncs across all windows
 
-### Smart Favicons
-Intelligent favicon handling that ensures icons are always visible regardless of browser theme:
-- **Public domains** use Google S2 favicon service, always returns properly themed, colored PNGs regardless of dark/light mode
-- **Internal/private domains** (localhost, private IPs, `.local`, `.internal`, `.corp`, etc.) use Chrome's native favicon since external services can't reach internal networks
+### Local Favicons
+Favicons come from Chrome's built-in `_favicon` API, served from Chrome's own local favicon cache:
+- **Zero network requests** — tab URLs never leave your browser to fetch an icon
+- Works for internal/private domains (localhost, `.local`, `.corp`, VPN-only hosts) exactly like public ones
 - **CSS drop-shadow** safety net ensures favicon contrast in both light and dark themes
-- **7-step fallback chain** when a favicon fails to load: Google S2 128px → DuckDuckGo → direct `/favicon.ico` → Google S2 64px → Clearbit → Chrome's original favicon → colored letter avatar
+- Fallback chain when Chrome has no cached icon: Chrome's reported favicon → colored letter avatar
 
 ### Colored Letter Avatars
 When no favicon is available after all fallbacks, a vibrant colored letter avatar is generated:
@@ -145,42 +145,31 @@ A guided tour highlights key features when you first install Tab Pilot.
 
 ## Installation
 
-The extension comes **pre-built**, no npm install or build step needed.
-
 ### Quick Install (3 steps)
 
-1. **Clone the repo:**
-   ```bash
-   git clone https://github.com/chethanbhatbs/tab-pilot.git
-   ```
+1. **Download the latest [`tab-pilot.zip`](https://github.com/chethanbhatbs/tab-pilot/releases/latest/download/tab-pilot.zip)** (built and attached by CI on every release) and extract it to a folder you keep around.
 
 2. **Load in Chrome:**
    - Open `chrome://extensions/` in Chrome
    - Enable **Developer mode** (toggle in top right)
-   - Click **Load unpacked**
-   - Navigate to the cloned folder and select `extension/tabpilot`
+   - Click **Load unpacked** and select the extracted folder
 
 3. **Open Tab Pilot:**
    - Click the Tab Pilot icon in the toolbar, OR
    - Press `Ctrl+Shift+E` (or `Cmd+Shift+E` on Mac)
    - The sidebar panel opens with all your tabs
 
-That's it, no build, no npm, no dependencies.
+### Build from source
 
-### Development (if you want to modify the frontend)
-
-Only needed if you want to change the React source code:
+The built sidepanel bundle is not committed — build it yourself in one step:
 
 ```bash
-cd frontend
-npm install --legacy-peer-deps
-npx craco build
-
-# Copy build output to extension
+git clone https://github.com/chethanbhatbs/tab-pilot.git
+cd tab-pilot/frontend && yarn install && cd ..
 bash build-extension.sh
 ```
 
-Then reload the extension in `chrome://extensions/`.
+Then load `extension/tabpilot` via **Load unpacked** as above. After code changes, re-run `build-extension.sh` and reload the extension.
 
 5. Click the Tab Pilot icon in the toolbar (or press `Cmd+Shift+E`) to open the sidebar.
 
@@ -238,8 +227,8 @@ flowchart TD
 - **chrome.storage for cross-window state**: Focus mode, active workspace, theme, and settings all persist to `chrome.storage.local` with `onChanged` listeners for real-time sync.
 - **Per-window tab grouping**: `chrome.tabs.group` only works within a single window, so hiding tabs groups them per-window separately.
 - **Adaptive hooks**: Both `useMockTabs` and `useChromeTabs` are always called (React rules of hooks). The adapter selects based on runtime context, extension uses real Chrome APIs, web preview uses mock data.
-- **Background-enforced Focus Mode**: Focus Mode restrictions are enforced in `background.js` (service worker), not just the UI. This ensures tabs/windows are blocked even if the sidebar is closed. The background script uses `chrome.scripting.executeScript` to inject page-level notifications into active tabs.
-- **Smart favicon routing**: Public domains are routed to Google S2 (theme-independent PNGs) while internal/private domains use Chrome's native `favIconUrl`, external services can't reach internal networks.
+- **Background-enforced Focus Mode**: Focus Mode restrictions are enforced in `background.js` (service worker), not just the UI. This ensures tabs/windows are blocked even if the sidebar is closed. Blocked-action notices show as toasts in the side panel — no code is ever injected into web pages.
+- **Local favicon routing**: All favicons are served by Chrome's built-in `_favicon` API from the local favicon cache, so the extension makes zero external requests and internal/VPN-only domains work like public ones.
 
 ---
 
@@ -258,16 +247,7 @@ Opens at `http://localhost:3000` with mock tab data for development.
 ### Build for Extension
 
 ```bash
-cd frontend
-npx craco build
-```
-
-Then copy `build/static/` to `extension/tabpilot/sidepanel/static/` and update the hashes in `sidepanel/index.html`.
-
-### Build Script
-
-```bash
-# From repo root
+# From repo root — builds the React app and packages it into extension/tabpilot/sidepanel
 ./build-extension.sh
 ```
 
@@ -280,9 +260,7 @@ tab-pilot/
 ├── extension/tabpilot/          # Chrome extension (load this in chrome://extensions)
 │   ├── manifest.json            # MV3 manifest
 │   ├── background.js            # Service worker (events, focus mode enforcement, notifications)
-│   ├── sidepanel/
-│   │   ├── index.html           # Side panel entry point
-│   │   └── static/              # Built React app (JS/CSS bundles)
+│   ├── sidepanel/               # Built React app (generated by build-extension.sh, not committed)
 │   └── icons/                   # Extension icons
 │
 ├── frontend/                    # React source code
@@ -355,7 +333,7 @@ tab-pilot/
 | Toasts | Sonner |
 | Extension | Chrome Manifest V3, Side Panel API |
 | State Sync | chrome.storage.local + onChanged listeners |
-| Fonts | Manrope (body), JetBrains Mono (monospace) |
+| Fonts | System font stack (no external font loading) |
 
 ---
 
@@ -365,20 +343,21 @@ tab-pilot/
 |-----------|---------|
 | `tabs` | Read/modify tabs (title, URL, pin, mute, move, close) |
 | `tabGroups` | Create/collapse groups for focus mode and workspaces |
-| `windows` | Read window state, create/close/minimize windows |
 | `sidePanel` | Render the sidebar UI |
 | `storage` | Persist settings, notes, workspaces, focus state |
 | `sessions` | Undo close tab (restore recently closed) |
 | `history` | Activity heatmap data |
-| `activeTab` | Access current tab info |
-| `scripting` | Inject Focus Mode blocked-action notifications into web pages |
-| `nativeMessaging` | Communicate with native host for Chrome profile switching |
+| `favicon` | Read favicons from Chrome's local cache (no network requests) |
 | `idle` | Pause time tracking when you step away |
-| `alarms` | Periodic flush for the active-time tracker |
-| `host_permissions: <all_urls>` | Required for `chrome.scripting.executeScript` to inject into any tab |
+| `alarms` | Periodic flush for the active-time tracker and auto-close checks |
+| `nativeMessaging` (optional) | Only requested if you enable Chrome profile switching from the Profiles panel |
+
+Tab Pilot requests **no host permissions** and injects **no content scripts** — it cannot read or change anything on the web pages you visit.
 
 ---
 
 ## Privacy
 
-Tab Pilot runs **entirely in your browser**. Zero data is collected, transmitted, or stored externally. All data (settings, notes, sessions, workspaces) lives in `chrome.storage.local` on your machine. No analytics. No tracking. No network requests (except favicon fetches from Google S2, DuckDuckGo, and Clearbit as fallbacks).
+Tab Pilot runs **entirely in your browser** and makes **zero network requests**. Nothing is collected or transmitted: no analytics, no tracking, no external favicon services. All data (settings, notes, sessions, workspaces, time stats) lives in `chrome.storage.local` on your machine. Favicons are read from Chrome's local favicon cache via the built-in `_favicon` API. See [PRIVACY.md](PRIVACY.md) for the full policy.
+
+(The hosted [live demo](https://chethanbhatbs.github.io/tab-pilot/) — a separate web page with mock data, not the extension — fetches demo favicons from Google's favicon service.)

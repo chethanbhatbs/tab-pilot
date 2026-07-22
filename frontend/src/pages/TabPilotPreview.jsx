@@ -165,7 +165,7 @@ function HeroSection() {
           <button
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText('https://chrome-pilot.preview.emergentagent.com');
+                await navigator.clipboard.writeText('https://github.com/chethanbhatbs/tab-pilot/releases/latest/download/tab-pilot.zip');
                 toast.success('Link copied!', { duration: 2000 });
               } catch {
                 toast.success('Link copied!', { duration: 2000 });
@@ -182,7 +182,7 @@ function HeroSection() {
           <button
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText('https://chrome-pilot.preview.emergentagent.com');
+                await navigator.clipboard.writeText('https://github.com/chethanbhatbs/tab-pilot/releases/latest/download/tab-pilot.zip');
               } catch { /* permissions not granted */ }
               toast.success('Install link copied!', { duration: 2000 });
             }}

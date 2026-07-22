@@ -106,6 +106,13 @@ export function SettingsPanel({ settings, onUpdate, onOpenProfiles }) {
           onChange={(v) => onUpdate('confirmActions', v)}
           testId="setting-confirm-actions"
         />
+        <SettingToggle
+          label="Smart duplicate matching"
+          description="Same Google Doc/Sheet counts as duplicate across worksheets"
+          checked={settings.smartDuplicateMatching}
+          onChange={(v) => onUpdate('smartDuplicateMatching', v)}
+          testId="setting-smart-duplicates"
+        />
       </div>
 
       {onOpenProfiles && (

@@ -116,6 +116,21 @@ function _showLetterAvatar(img, urlHint) {
   }
 }
 
+// Smart duplicate matching (default ON, Settings → "Smart duplicate matching"):
+// Google's editors encode the open worksheet/view in the URL (?gid= for Sheets),
+// so the same document opened twice looks like two different URLs. When enabled,
+// docs.google.com editor URLs collapse to their document ID so any view of the
+// same document counts as a duplicate. useSettings syncs the flag here so every
+// dedupe consumer (Sidebar, panels, chromeAdapter) applies one consistent rule.
+let _smartDupMatching = true;
+export function setSmartDuplicateMatching(enabled) {
+  _smartDupMatching = enabled !== false;
+}
+
+// Keeps the /u/<n>/ account segment: the same doc open under two different
+// Google accounts stays distinct, so dedupe never closes the other account's view.
+const GDOC_EDITOR_RE = /^\/(spreadsheets|document|presentation|forms)(\/u\/\d+)?\/d\/([^/]+)/;
+
 export function normalizeUrl(url) {
   if (!url) return url;
   // For chrome:// and chrome-extension:// URLs, use as-is (stripped of trailing slash)
@@ -124,6 +139,10 @@ export function normalizeUrl(url) {
   }
   try {
     const u = new URL(url);
+    if (_smartDupMatching && u.hostname === 'docs.google.com') {
+      const m = u.pathname.match(GDOC_EDITOR_RE);
+      if (m) return `${u.origin}/${m[1]}${m[2] || ''}/d/${m[3]}`;
+    }
     // Two tabs are duplicates only when they point to the SAME page. We ignore
     // the #hash (in-page anchors) but keep path + query, so different pages on
     // the same site (e.g. /inbox vs /compose) are NOT treated as duplicates.

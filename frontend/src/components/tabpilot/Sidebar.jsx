@@ -407,7 +407,7 @@ export function Sidebar({ onCollapse }) {
                 to duplicate it inside the panel. Two-tone matches the landing page. */}
             <span className="text-[13px] font-heading font-bold tracking-tight shrink-0" data-testid="brand-lockup">
               <span className="text-foreground">Tab</span>{' '}
-              <span className="text-primary">Pilot</span>
+              <span className="text-primary">Radar</span>
             </span>
             <div className="flex-1" />
             {/* More menu — genuinely secondary panels (Settings lives bottom-right) */}

@@ -14,8 +14,8 @@ export const MOCK_WINDOWS = [
     tabs: [
       {
         id: 101, windowId: 1, index: 0,
-        title: 'GitHub - tabpilot/extension: Chrome Tab Manager',
-        url: 'https://github.com/tabpilot/extension',
+        title: 'GitHub - tab-radar/extension: Chrome Tab Manager',
+        url: 'https://github.com/tab-radar/extension',
         active: false, pinned: true,
         audible: false, mutedInfo: { muted: false },
         status: 'complete', groupId: -1,

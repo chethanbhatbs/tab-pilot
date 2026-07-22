@@ -3,7 +3,7 @@
 Everything below is copy you paste into the Web Store Developer Dashboard.
 
 ## Product name
-Tab Pilot
+Tab Radar
 
 ## Category
 Productivity → Tools
@@ -12,7 +12,7 @@ Productivity → Tools
 Find, switch, clean up, and focus your Chrome tabs from a keyboard-first side panel. 100% local, no tracking.
 
 ## Detailed description
-Tab Pilot is a keyboard-first command center for your tabs, living in the Chrome side panel so it is always one click away.
+Tab Radar is a keyboard-first command center for your tabs, living in the Chrome side panel so it is always one click away.
 
 FIND & SWITCH
 - Fuzzy search every open tab by title or URL
@@ -35,14 +35,14 @@ INSIGHTS
 PRIVACY
 - Runs entirely in your browser and makes zero network requests
 - No analytics, no tracking, no external servers
-- No host permissions and no content scripts: Tab Pilot cannot read or change the pages you visit
+- No host permissions and no content scripts: Tab Radar cannot read or change the pages you visit
 - Favicons are read from Chrome's local cache
 - All data stays in local storage on your device
 
-Open source: https://github.com/chethanbhatbs/tab-pilot
+Open source: https://github.com/chethanbhatbs/tab-radar
 
 ## Single purpose (Privacy tab)
-Tab Pilot is a side-panel tab manager: it lets users search, switch, organize, deduplicate, suspend, and focus their open Chrome tabs and windows.
+Tab Radar is a side-panel tab manager: it lets users search, switch, organize, deduplicate, suspend, and focus their open Chrome tabs and windows.
 
 ## Permission justifications (Privacy tab — one per permission)
 - tabs: Read and act on the user's open tabs (switch, close, move, pin, mute) — the core function.
@@ -57,10 +57,10 @@ Tab Pilot is a side-panel tab manager: it lets users search, switch, organize, d
 
 ## Data usage (Privacy tab)
 Tick: "I do not sell or transfer user data..." and, for every data category, leave collection unchecked.
-Tab Pilot does not collect, transmit, or sell any user data. It makes no network requests.
+Tab Radar does not collect, transmit, or sell any user data. It makes no network requests.
 
 ## Privacy policy URL
-https://github.com/chethanbhatbs/tab-pilot/blob/main/PRIVACY.md
+https://github.com/chethanbhatbs/tab-radar/blob/main/PRIVACY.md
 
 ## Screenshots
 docs/store/01-overview.png (1280x800) — sidebar tab tree + product overview.

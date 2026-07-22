@@ -1,7 +1,7 @@
 /**
- * ChromePilot Background Service Worker
+ * Tab Radar Background Service Worker
  * Uses Chrome Side Panel API for persistent sidebar across all tabs.
- * Auto-opens side panel everywhere so users rely on ChromePilot instead of the tab bar.
+ * Auto-opens side panel everywhere so users rely on Tab Radar instead of the tab bar.
  */
 
 // Enable side panel to auto-open when toolbar icon is clicked

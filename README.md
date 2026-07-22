@@ -1,13 +1,13 @@
-<h1 align="center">Tab Pilot</h1>
+<h1 align="center">Tab Radar</h1>
 
 <p align="center">
   A Chrome side panel to find, switch, clean up, and focus your tabs and windows — without leaving the browser.
 </p>
 
 <p align="center">
-  <a href="https://github.com/chethanbhatbs/tab-pilot/releases/latest/download/tab-pilot.zip"><img alt="Download Tab Pilot" src="https://img.shields.io/badge/Download-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+  <a href="https://github.com/chethanbhatbs/tab-radar/releases/latest/download/tab-radar.zip"><img alt="Download Tab Radar" src="https://img.shields.io/badge/Download-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
   &nbsp;
-  <a href="https://chethanbhatbs.github.io/tab-pilot/"><img alt="Live demo" src="https://img.shields.io/badge/Live%20Demo-2563eb?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+  <a href="https://chethanbhatbs.github.io/tab-radar/"><img alt="Live demo" src="https://img.shields.io/badge/Live%20Demo-2563eb?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -96,7 +96,7 @@ Switch between Chrome profiles directly from the sidebar. Requires a one-time na
 - **Profile list** with avatars, names, and email addresses
 - **One-click switch** to any profile (opens that profile's Chrome window)
 - **Sync Profiles** button to pick up newly created profiles
-- **Remove profiles** from Tab Pilot (per-profile, without affecting Chrome)
+- **Remove profiles** from Tab Radar (per-profile, without affecting Chrome)
 - **Identity selection**, each Chrome profile identifies itself via user selection, cached per-profile in `chrome.storage.local`
 - **Setup wizard** with copy-paste Terminal commands and safety notice
 
@@ -139,7 +139,7 @@ A persistent footer combining live metrics and profile switching:
 Categorized feature guide organized into "Find & Navigate", "Organize & Focus", and "Save & Automate" sections. Includes keyboard shortcuts reference and a feedback button.
 
 ### First-Time Tour
-A guided tour highlights key features when you first install Tab Pilot.
+A guided tour highlights key features when you first install Tab Radar.
 
 ---
 
@@ -147,15 +147,15 @@ A guided tour highlights key features when you first install Tab Pilot.
 
 ### Quick Install (3 steps)
 
-1. **Download the latest [`tab-pilot.zip`](https://github.com/chethanbhatbs/tab-pilot/releases/latest/download/tab-pilot.zip)** (built and attached by CI on every release) and extract it to a folder you keep around.
+1. **Download the latest [`tab-radar.zip`](https://github.com/chethanbhatbs/tab-radar/releases/latest/download/tab-radar.zip)** (built and attached by CI on every release) and extract it to a folder you keep around.
 
 2. **Load in Chrome:**
    - Open `chrome://extensions/` in Chrome
    - Enable **Developer mode** (toggle in top right)
    - Click **Load unpacked** and select the extracted folder
 
-3. **Open Tab Pilot:**
-   - Click the Tab Pilot icon in the toolbar, OR
+3. **Open Tab Radar:**
+   - Click the Tab Radar icon in the toolbar, OR
    - Press `Ctrl+Shift+E` (or `Cmd+Shift+E` on Mac)
    - The sidebar panel opens with all your tabs
 
@@ -164,14 +164,14 @@ A guided tour highlights key features when you first install Tab Pilot.
 The built sidepanel bundle is not committed — build it yourself in one step:
 
 ```bash
-git clone https://github.com/chethanbhatbs/tab-pilot.git
-cd tab-pilot/frontend && yarn install && cd ..
+git clone https://github.com/chethanbhatbs/tab-radar.git
+cd tab-radar/frontend && yarn install && cd ..
 bash build-extension.sh
 ```
 
 Then load `extension/tabpilot` via **Load unpacked** as above. After code changes, re-run `build-extension.sh` and reload the extension.
 
-5. Click the Tab Pilot icon in the toolbar (or press `Cmd+Shift+E`) to open the sidebar.
+5. Click the Tab Radar icon in the toolbar (or press `Cmd+Shift+E`) to open the sidebar.
 
 6. **(Optional) Set up profile switching:**
    ```bash
@@ -187,7 +187,7 @@ Then load `extension/tabpilot` via **Load unpacked** as above. After code change
 
 | Shortcut | Action |
 |----------|--------|
-| `Cmd+Shift+E` | Toggle Tab Pilot sidebar |
+| `Cmd+Shift+E` | Toggle Tab Radar sidebar |
 | `Cmd+K` / `Ctrl+K` | Focus the search bar |
 | `↑` `↓` | Navigate through tabs |
 | `Enter` | Switch to selected tab |
@@ -256,7 +256,7 @@ Opens at `http://localhost:3000` with mock tab data for development.
 ## Project Structure
 
 ```
-tab-pilot/
+tab-radar/
 ├── extension/tabpilot/          # Chrome extension (load this in chrome://extensions)
 │   ├── manifest.json            # MV3 manifest
 │   ├── background.js            # Service worker (events, focus mode enforcement, notifications)
@@ -304,7 +304,7 @@ tab-pilot/
 │   │   │   └── mockData.js           # Mock tab/window data
 │   │   │
 │   │   ├── pages/
-│   │   │   └── TabPilotPreview.jsx # Web preview with landing page
+│   │   │   └── TabRadarPreview.jsx # Web preview with landing page
 │   │   │
 │   │   └── components/ui/           # shadcn/ui components
 │   │
@@ -352,12 +352,12 @@ tab-pilot/
 | `alarms` | Periodic flush for the active-time tracker and auto-close checks |
 | `nativeMessaging` (optional) | Only requested if you enable Chrome profile switching from the Profiles panel |
 
-Tab Pilot requests **no host permissions** and injects **no content scripts** — it cannot read or change anything on the web pages you visit.
+Tab Radar requests **no host permissions** and injects **no content scripts** — it cannot read or change anything on the web pages you visit.
 
 ---
 
 ## Privacy
 
-Tab Pilot runs **entirely in your browser** and makes **zero network requests**. Nothing is collected or transmitted: no analytics, no tracking, no external favicon services. All data (settings, notes, sessions, workspaces, time stats) lives in `chrome.storage.local` on your machine. Favicons are read from Chrome's local favicon cache via the built-in `_favicon` API. See [PRIVACY.md](PRIVACY.md) for the full policy.
+Tab Radar runs **entirely in your browser** and makes **zero network requests**. Nothing is collected or transmitted: no analytics, no tracking, no external favicon services. All data (settings, notes, sessions, workspaces, time stats) lives in `chrome.storage.local` on your machine. Favicons are read from Chrome's local favicon cache via the built-in `_favicon` API. See [PRIVACY.md](PRIVACY.md) for the full policy.
 
-(The hosted [live demo](https://chethanbhatbs.github.io/tab-pilot/) — a separate web page with mock data, not the extension — fetches demo favicons from Google's favicon service.)
+(The hosted [live demo](https://chethanbhatbs.github.io/tab-radar/) — a separate web page with mock data, not the extension — fetches demo favicons from Google's favicon service.)

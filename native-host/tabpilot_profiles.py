@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TabPilot Native Messaging Host - Chrome Profile Manager"""
+"""Tab Radar Native Messaging Host - Chrome Profile Manager"""
 import sys
 import json
 import struct

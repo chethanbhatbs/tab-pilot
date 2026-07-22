@@ -88,7 +88,7 @@ export function ProfilePanel() {
   const handleSwitch = useCallback(async (profileDirectory, profileName) => {
     if (switching) return;
     setSwitching(profileDirectory);
-    const result = await chromeSwitchProfile(profileDirectory, 'https://github.com/chethan-sudo/chrome-pilot');
+    const result = await chromeSwitchProfile(profileDirectory, 'https://github.com/chethanbhatbs/tab-radar');
     if (result?.success) {
       toast.success(`Opening "${profileName}" — check GitHub for install instructions`);
     } else {
@@ -112,7 +112,7 @@ export function ProfilePanel() {
     const updated = [...hiddenProfiles, directory];
     setHiddenProfiles(updated);
     chromeStorageSet({ tabpilot_hidden_profiles: updated });
-    toast.success(`"${p?.name || directory}" removed from Tab Pilot`);
+    toast.success(`"${p?.name || directory}" removed from Tab Radar`);
   }, [profiles, hiddenProfiles]);
 
   const handleSelectAsMe = useCallback((directory) => {
@@ -159,7 +159,7 @@ export function ProfilePanel() {
             <span className="text-[11px] font-heading font-semibold text-foreground/90">Optional Feature</span>
           </div>
           <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
-            Switching Chrome profiles from Tab Pilot needs the <span className="font-mono">nativeMessaging</span> permission.
+            Switching Chrome profiles from Tab Radar needs the <span className="font-mono">nativeMessaging</span> permission.
             It is off by default and only ever talks to a small local helper you install yourself — nothing is requested until you enable it here.
           </p>
           <button
@@ -217,7 +217,7 @@ export function ProfilePanel() {
           <div className="flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-primary/[0.04] border border-primary/10">
             <ShieldCheck size={11} className="text-primary shrink-0 mt-0.5" strokeWidth={2} />
             <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
-              <span className="font-semibold text-primary">100% Safe</span> — The script only reads Chrome's profile names (not passwords, history, or browsing data). It makes zero network requests. You can <a href="#" onClick={(e) => { e.preventDefault(); if (isExtensionContext()) chrome.tabs.create({ url: 'https://github.com/chethanbhatbs/tab-pilot/blob/main/native-host/tabpilot_profiles.py' }); }} className="underline text-primary/80 hover:text-primary">review the source code</a>.
+              <span className="font-semibold text-primary">100% Safe</span> — The script only reads Chrome's profile names (not passwords, history, or browsing data). It makes zero network requests. You can <a href="#" onClick={(e) => { e.preventDefault(); if (isExtensionContext()) chrome.tabs.create({ url: 'https://github.com/chethanbhatbs/tab-radar/blob/main/native-host/tabpilot_profiles.py' }); }} className="underline text-primary/80 hover:text-primary">review the source code</a>.
             </p>
           </div>
 
@@ -330,7 +330,7 @@ export function ProfilePanel() {
                   onClick={() => handleRemoveFromExtension(profile.directory)}
                   className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-destructive
                     hover:bg-destructive/10 transition-colors shrink-0"
-                  title="Remove from Tab Pilot"
+                  title="Remove from Tab Radar"
                   data-testid={`remove-profile-${profile.directory}`}
                 >
                   <Trash2 size={11} strokeWidth={1.5} />

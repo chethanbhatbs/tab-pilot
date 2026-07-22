@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Double-click me (macOS) to remove the Tab Pilot helper. Runs uninstall.sh.
+# Double-click me (macOS) to remove the Tab Radar helper. Runs uninstall.sh.
 DIR="$(cd "$(dirname "$0")" && pwd)"
 bash "$DIR/uninstall.sh"
 echo ""

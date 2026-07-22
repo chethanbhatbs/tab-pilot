@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Tab Pilot Extension Builder
+# Tab Radar Extension Builder
 # Run from anywhere: bash build-extension.sh
 # Builds the React app and packages it into extension/tabpilot/sidepanel.
 # =============================================================================
@@ -42,7 +42,7 @@ cat > "$EXT_SIDEPANEL/index.html" << HTMLEOF
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Tab Pilot</title>
+  <title>Tab Radar</title>
   <link href="./static/css/${CSS_FILE}" rel="stylesheet"/>
 </head>
 <body>
@@ -57,6 +57,6 @@ echo "==> Done! Extension is in $ROOT/extension/tabpilot/"
 echo ""
 echo "  To install / update:"
 echo "  1. chrome://extensions/ -> Developer mode ON -> Load unpacked (first time)"
-echo "  2. After rebuilds, click the reload icon on the Tab Pilot card"
+echo "  2. After rebuilds, click the reload icon on the Tab Radar card"
 echo "  3. Reopen the side panel to pick up the new build"
 echo ""

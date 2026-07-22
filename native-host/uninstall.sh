@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tab Pilot Native Host Uninstaller (macOS / Linux)
+# Tab Radar Native Host Uninstaller (macOS / Linux)
 # Revokes profile switching by removing the native-messaging-host manifest from
 # every Chromium-family browser. Self-locating — run it from anywhere.
 set -e
@@ -37,7 +37,7 @@ case "$OSTYPE" in
 esac
 
 echo ""
-echo "  Tab Pilot Native Host Uninstaller"
+echo "  Tab Radar Native Host Uninstaller"
 echo "  ================================="
 echo ""
 

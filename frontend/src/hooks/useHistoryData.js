@@ -113,7 +113,7 @@ export function useHistoryData(timeFilter) {
           totalVisits,
         });
       } catch (e) {
-        console.error('Tab Pilot history error:', e);
+        console.error('Tab Radar history error:', e);
       }
     })();
 
@@ -218,7 +218,7 @@ export function useTimelineGrid() {
 
         setData({ grid, totalVisits, mostActiveDay });
       } catch (e) {
-        console.error('Tab Pilot timeline error:', e);
+        console.error('Tab Radar timeline error:', e);
       }
     }
 

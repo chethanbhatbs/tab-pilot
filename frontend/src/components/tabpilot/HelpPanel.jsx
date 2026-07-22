@@ -43,8 +43,8 @@ function ShortcutRow({ keys, action }) {
 
 export function HelpPanel({ onBack }) {
   const handleFeedback = () => {
-    const subject = encodeURIComponent('Tab Pilot Feedback');
-    const body = encodeURIComponent('Hi,\n\nI have the following feedback about Tab Pilot:\n\n');
+    const subject = encodeURIComponent('Tab Radar Feedback');
+    const body = encodeURIComponent('Hi,\n\nI have the following feedback about Tab Radar:\n\n');
     window.open(`mailto:bschethanbhat@gmail.com?subject=${subject}&body=${body}`, '_blank');
   };
 
@@ -52,7 +52,7 @@ export function HelpPanel({ onBack }) {
     <div className="p-3 space-y-2" data-testid="help-panel">
       {/* Hero */}
       <div className="text-center py-3">
-        <h1 className="text-[16px] font-heading font-bold text-foreground tracking-tight brand-text">Tab Pilot</h1>
+        <h1 className="text-[16px] font-heading font-bold text-foreground tracking-tight brand-text">Tab Radar</h1>
         <p className="text-[11px] text-muted-foreground/70 font-body mt-0.5">Your browser, mastered.</p>
         <div className="flex items-center justify-center gap-2 mt-2">
           <span className="text-[11px] font-mono text-muted-foreground/50 bg-secondary px-1.5 py-0.5 rounded">v1.2.0</span>

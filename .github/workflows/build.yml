@@ -32,15 +32,15 @@ jobs:
 
       - name: Package extension zip (manifest at zip root — Chrome Web Store format)
         working-directory: extension/tabpilot
-        run: zip -r ../../tab-pilot.zip . -x '*.DS_Store' -x 'README.md'
+        run: zip -r ../../tab-radar.zip . -x '*.DS_Store' -x 'README.md'
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tab-pilot
-          path: tab-pilot.zip
+          name: tab-radar
+          path: tab-radar.zip
 
       - name: Attach zip to release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: tab-pilot.zip
+          files: tab-radar.zip

@@ -1,6 +1,6 @@
-# Tab Pilot Chrome Extension — Installation Guide
+# Tab Radar Chrome Extension — Installation Guide
 
-Tab Pilot is now positioned as a keyboard-first Chrome command center: search every
+Tab Radar is now positioned as a keyboard-first Chrome command center: search every
 tab, jump across windows, clean duplicate tabs, start Focus Mode, and capture
 workspaces without digging through the sidebar.
 
@@ -10,7 +10,7 @@ workspaces without digging through the sidebar.
 2. Open Chrome and go to: `chrome://extensions/`
 3. Enable **Developer mode** (toggle in top-right corner)
 4. Click **Load unpacked** and select the `tabpilot/` folder
-5. The Tab Pilot icon appears in your toolbar
+5. The Tab Radar icon appears in your toolbar
 6. Open the sidebar: `Ctrl+Shift+E` (Windows/Linux) or `Cmd+Shift+E` (Mac)
 7. `Ctrl+Shift+K` / `Cmd+Shift+K` also opens the side panel; press `Cmd+K` inside it for the command palette
 
@@ -45,11 +45,11 @@ workspaces without digging through the sidebar.
 - Exit Focus Mode
 - Save the current window as a workspace
 - Restore the most recently saved workspace in a new window
-- Open the full Tab Pilot sidebar
+- Open the full Tab Radar sidebar
 
 ## Reverting This Branch
 
-This update was developed on the `codex-tab-pilot-command-center` branch. To go
+This update was developed on the `codex-tab-radar-command-center` branch. To go
 back to the previous extension state, switch back to `main`.
 
 ## Rebuilding After Code Changes

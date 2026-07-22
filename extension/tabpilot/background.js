@@ -329,9 +329,13 @@ const IDLE_THRESHOLD_S = 60;
 
 function timeDomain(url) {
   try {
-    const h = new URL(url).hostname.replace(/^www\./, '');
-    if (!h || h.startsWith('chrome') || h === 'newtab') return null;
-    return h;
+    const u = new URL(url);
+    // Only track real web pages. Checking the protocol (not the hostname)
+    // keeps chrome:// internals out — chrome://extensions has hostname
+    // "extensions", which used to slip through and show up as a "site".
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    const h = u.hostname.replace(/^www\./, '');
+    return h || null;
   } catch { return null; }
 }
 

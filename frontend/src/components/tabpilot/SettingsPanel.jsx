@@ -108,7 +108,7 @@ export function SettingsPanel({ settings, onUpdate, onOpenProfiles }) {
         />
         <SettingToggle
           label="Smart duplicate matching"
-          description="Same Google Doc/Sheet counts as duplicate across worksheets"
+          description="Treat tabs opening the same document as duplicates, even at different sections (e.g. two worksheets of one Google Sheet). Off = exact same URL only"
           checked={settings.smartDuplicateMatching}
           onChange={(v) => onUpdate('smartDuplicateMatching', v)}
           testId="setting-smart-duplicates"

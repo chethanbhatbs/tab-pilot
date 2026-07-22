@@ -22,7 +22,14 @@ function _localFaviconUrl(pageUrl, size = 32) {
 export function getFaviconUrl(url, chromeFavIconUrl) {
   if (IS_EXTENSION_CTX) {
     if (url) {
-      try { return _localFaviconUrl(url); } catch {}
+      try {
+        // Look up by ORIGIN, not the full page URL: sites that swap in
+        // per-page favicons (GitHub's PR-status check/cross icons, notification
+        // badges) would otherwise replace their recognizable logo in the list.
+        const u = new URL(url);
+        const target = (u.protocol === 'http:' || u.protocol === 'https:') ? `${u.origin}/` : url;
+        return _localFaviconUrl(target);
+      } catch {}
     }
     return chromeFavIconUrl || null;
   }

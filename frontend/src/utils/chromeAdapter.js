@@ -383,11 +383,14 @@ export async function chromeRestoreSession(session) {
   return tabCount;
 }
 
+/** Returns whether the tab was actually discarded — Chrome refuses some. */
 export async function chromeDiscardTab(tabId) {
   try {
     await chrome.tabs.discard(tabId);
+    return true;
   } catch {
     // Tab might not be discardable
+    return false;
   }
 }
 

@@ -264,14 +264,21 @@ export function useChromeTabs() {
     if (tab) await chromeSwitchToTab(tabId, tab.windowId);
   }, [allTabs]);
 
+  // Returns { attempted, suspended }: Chrome refuses to discard some tabs (still
+  // loading, playing media, and so on), so the two numbers can differ and the
+  // caller needs both to say something truthful. Only the tabs Chrome actually
+  // discarded go into the optimistic overlay.
   const suspendInactive = useCallback(async () => {
     const toSuspend = [];
     windows.forEach(w => w.tabs?.forEach(t => {
       if (!t.active && !t.pinned && !t.audible && !t.discarded) toSuspend.push(t.id);
     }));
-    setPendingSuspend(prev => new Set([...prev, ...toSuspend]));
-    for (const id of toSuspend) await chromeDiscardTab(id);
-    return toSuspend.length;
+    const done = [];
+    for (const id of toSuspend) {
+      if (await chromeDiscardTab(id)) done.push(id);
+    }
+    if (done.length > 0) setPendingSuspend(prev => new Set([...prev, ...done]));
+    return { attempted: toSuspend.length, suspended: done.length };
   }, [windows]);
 
   // Actually reload every discarded tab so they're truly un-suspended (the old

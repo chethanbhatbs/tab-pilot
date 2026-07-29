@@ -300,10 +300,21 @@ export function Sidebar({ onCollapse }) {
     setViewMode('window');
   }, []);
 
-  const handleSuspendInactive = useCallback(() => {
-    const count = tabs.suspendInactive();
-    if (count > 0) toast.success(`Suspended ${count} inactive tab${count > 1 ? 's' : ''}`);
-    else toast.info('No inactive tabs to suspend');
+  // suspendInactive is async — without the await this compared a Promise to 0 and
+  // always reported "No inactive tabs to suspend", even after suspending tabs.
+  const handleSuspendInactive = useCallback(async () => {
+    const { attempted, suspended } = await tabs.suspendInactive();
+    if (suspended > 0) {
+      const refused = attempted - suspended;
+      toast.success(
+        `Suspended ${suspended} inactive tab${suspended > 1 ? 's' : ''}` +
+        (refused > 0 ? `, ${refused} could not be suspended` : '')
+      );
+    } else if (attempted > 0) {
+      toast.info(`Chrome would not suspend ${attempted === 1 ? 'that tab' : 'any of those tabs'} right now`);
+    } else {
+      toast.info('No inactive tabs to suspend');
+    }
   }, [tabs]);
 
   const handleUnsuspendAll = useCallback(async () => {

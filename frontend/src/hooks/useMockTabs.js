@@ -315,13 +315,15 @@ export function useMockTabs() {
     setSuspendedTabs(prev => { const n = new Set(prev); n.delete(tabId); return n; });
   }, []);
 
-  const suspendInactive = useCallback(() => {
+  // Same { attempted, suspended } shape as the Chrome hook — the demo has nothing
+  // that can refuse, so the two always match.
+  const suspendInactive = useCallback(async () => {
     const toSuspend = new Set();
     windows.forEach(w => w.tabs.forEach(t => {
       if (!t.active && !t.pinned && !t.audible) toSuspend.add(t.id);
     }));
     setSuspendedTabs(toSuspend);
-    return toSuspend.size;
+    return { attempted: toSuspend.size, suspended: toSuspend.size };
   }, [windows]);
 
   const unsuspendAll = useCallback(() => {

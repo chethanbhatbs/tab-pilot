@@ -1,7 +1,7 @@
 /**
- * ChromePilot Background Service Worker
+ * Tab Radar Background Service Worker
  * Uses Chrome Side Panel API for persistent sidebar across all tabs.
- * Auto-opens side panel everywhere so users rely on ChromePilot instead of the tab bar.
+ * Auto-opens side panel everywhere so users rely on Tab Radar instead of the tab bar.
  */
 
 // Enable side panel to auto-open when toolbar icon is clicked
@@ -53,199 +53,14 @@ function notifySidepanel() {
   }, 100);
 }
 
-// Keep this in sync with normalizeUrl() in frontend/src/utils/grouping.js so the
-// command center and the side panel agree on what counts as a duplicate.
-function normalizeTabUrl(url) {
-  if (!url) return '';
-  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) {
-    return url.replace(/\/$/, '');
-  }
-  try {
-    const u = new URL(url);
-    return u.origin + u.pathname.replace(/\/$/, '') + u.search;
-  } catch {
-    return url || '';
-  }
-}
-
-async function getCommandCenterState() {
-  const [tabs, windows, stored] = await Promise.all([
-    chrome.tabs.query({}),
-    chrome.windows.getAll({ windowTypes: ['normal'], populate: true }),
-    chrome.storage.local.get(['tabpilot_focus', 'tabpilot_workspaces']),
-  ]);
-
-  const activeTab = tabs.find((tab) => tab.active && tab.windowId === windows.find((win) => win.focused)?.id)
-    || tabs.find((tab) => tab.active);
-  const urlCounts = tabs.reduce((counts, tab) => {
-    const key = normalizeTabUrl(tab.url);
-    if (key) counts[key] = (counts[key] || 0) + 1;
-    return counts;
-  }, {});
-
-  return {
-    tabs: tabs.map((tab) => ({
-      id: tab.id,
-      windowId: tab.windowId,
-      title: tab.title || tab.url || 'Untitled tab',
-      url: tab.url || '',
-      favIconUrl: tab.favIconUrl || '',
-      active: Boolean(tab.active),
-      pinned: Boolean(tab.pinned),
-      audible: Boolean(tab.audible),
-      duplicateCount: urlCounts[normalizeTabUrl(tab.url)] || 0,
-    })),
-    windows: windows.map((win, index) => ({
-      id: win.id,
-      focused: Boolean(win.focused),
-      tabCount: win.tabs?.length || 0,
-      label: `Window ${index + 1}`,
-    })),
-    activeTabId: activeTab?.id || null,
-    activeWindowId: activeTab?.windowId || null,
-    focusActive: Boolean(stored.tabpilot_focus?.active),
-    workspaceCount: stored.tabpilot_workspaces?.length || 0,
-  };
-}
-
-async function closeDuplicateTabs() {
-  const tabs = await chrome.tabs.query({});
-  const seen = new Map();
-  const duplicateIds = [];
-
-  for (const tab of tabs) {
-    const key = normalizeTabUrl(tab.url);
-    if (!key) continue;
-
-    if (seen.has(key)) {
-      duplicateIds.push(tab.id);
-    } else {
-      seen.set(key, tab.id);
-    }
-  }
-
-  if (duplicateIds.length) {
-    await chrome.tabs.remove(duplicateIds);
-  }
-  return duplicateIds.length;
-}
-
-async function startFocusModeForWindow(windowId) {
-  const tabs = await chrome.tabs.query({ windowId });
-  const focusTabIds = tabs.map((tab) => tab.id).filter(Boolean);
-  if (!focusTabIds.length) return 0;
-
-  await chrome.storage.local.set({
-    tabpilot_focus: {
-      active: true,
-      focusTabIds,
-      startedAt: Date.now(),
-      source: 'command-center-window',
-    },
-  });
-  return focusTabIds.length;
-}
-
-async function startFocusModeForTab(tabId) {
-  if (!tabId) return 0;
-  await chrome.storage.local.set({
-    tabpilot_focus: {
-      active: true,
-      focusTabIds: [tabId],
-      startedAt: Date.now(),
-      source: 'command-center-tab',
-    },
-  });
-  return 1;
-}
-
-async function stopFocusMode() {
-  await chrome.storage.local.set({ tabpilot_focus: null });
-}
-
-async function saveCurrentWindowWorkspace(windowId) {
-  const tabs = await chrome.tabs.query({ windowId });
-  const urls = tabs.map((tab) => tab.url).filter(Boolean);
-  if (!urls.length) return null;
-
-  const stored = await chrome.storage.local.get(['tabpilot_workspaces']);
-  const workspaces = Array.isArray(stored.tabpilot_workspaces) ? stored.tabpilot_workspaces : [];
-  const workspace = {
-    id: `workspace-${Date.now()}`,
-    name: `Workspace ${new Date().toLocaleString()}`,
-    createdAt: Date.now(),
-    urls,
-  };
-  await chrome.storage.local.set({ tabpilot_workspaces: [workspace, ...workspaces].slice(0, 20) });
-  return workspace;
-}
-
-async function openLatestWorkspace() {
-  const stored = await chrome.storage.local.get(['tabpilot_workspaces']);
-  const [workspace] = Array.isArray(stored.tabpilot_workspaces) ? stored.tabpilot_workspaces : [];
-  if (!workspace?.urls?.length) return null;
-  await chrome.windows.create({ url: workspace.urls });
-  return workspace;
-}
-
-async function messageActiveTab(message) {
-  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  if (!tab?.id) return false;
-  await chrome.tabs.sendMessage(tab.id, message);
-  return true;
-}
-
+// The in-page command center (content script) is gone — both keyboard commands
+// now land on the side panel, which hosts the Cmd+K palette.
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'open-command-center') {
-    messageActiveTab({ action: 'tabpilot-open-command-center' }).catch(() => {
-      chrome.windows.getCurrent().then((win) => {
-        if (win?.id) chrome.sidePanel.open({ windowId: win.id }).catch(() => {});
-      }).catch(() => {});
-    });
+    chrome.windows.getLastFocused().then((win) => {
+      if (win?.id) chrome.sidePanel.open({ windowId: win.id }).catch(() => {});
+    }).catch(() => {});
   }
-});
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!message?.action?.startsWith('tabpilot-command-')) return false;
-
-  (async () => {
-    const activeTabId = sender.tab?.id || message.activeTabId;
-    const activeWindowId = sender.tab?.windowId || message.activeWindowId;
-
-    switch (message.action) {
-      case 'tabpilot-command-state':
-        return { ok: true, state: await getCommandCenterState() };
-      case 'tabpilot-command-switch-tab':
-        await chrome.tabs.update(message.tabId, { active: true });
-        if (message.windowId) await chrome.windows.update(message.windowId, { focused: true });
-        return { ok: true };
-      case 'tabpilot-command-close-tab':
-        await chrome.tabs.remove(message.tabId);
-        return { ok: true };
-      case 'tabpilot-command-close-duplicates':
-        return { ok: true, closedCount: await closeDuplicateTabs() };
-      case 'tabpilot-command-focus-tab':
-        return { ok: true, focusCount: await startFocusModeForTab(message.tabId || activeTabId) };
-      case 'tabpilot-command-focus-window':
-        return { ok: true, focusCount: await startFocusModeForWindow(message.windowId || activeWindowId) };
-      case 'tabpilot-command-stop-focus':
-        await stopFocusMode();
-        return { ok: true };
-      case 'tabpilot-command-save-workspace':
-        return { ok: true, workspace: await saveCurrentWindowWorkspace(message.windowId || activeWindowId) };
-      case 'tabpilot-command-open-workspace':
-        return { ok: true, workspace: await openLatestWorkspace() };
-      case 'tabpilot-command-open-sidepanel':
-        await chrome.sidePanel.open({ windowId: activeWindowId });
-        return { ok: true };
-      default:
-        return { ok: false, error: 'Unknown Tab Pilot command.' };
-    }
-  })()
-    .then(sendResponse)
-    .catch((error) => sendResponse({ ok: false, error: error?.message || String(error) }));
-
-  return true;
 });
 
 // ── Focus Mode: strict tab/window restriction ─────────────────────
@@ -315,101 +130,15 @@ async function enforceActiveFocusTab(preferWindowId) {
   }
 }
 
-// Inject a page-level notification directly into the active tab using chrome.scripting
-// Works on any already-open tab — no content script registration needed.
-// Also sends to sidebar for redundancy.
+// Notify about a blocked focus-mode action. The side panel shows the toast;
+// the old in-page overlay went away with the scripting permission.
 let _lastNotifyTime = 0;
 function notifyFocusBlocked(reason) {
   // Throttle — max once per 2 seconds
   const now = Date.now();
   if (now - _lastNotifyTime < 2000) return;
   _lastNotifyTime = now;
-
-  // 1. Sidebar toast
   chrome.runtime.sendMessage({ action: 'focus-blocked', reason }).catch(() => {});
-
-  // 2. Page overlay — injected after enforceActiveFocusTab settles
-  setTimeout(async () => {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      if (!tab?.id) return;
-      // Can't inject into chrome:// or extension pages
-      if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) return;
-
-      const messages = {
-        'new-tab': 'Staying on your focus tabs',
-        'new-window': 'New window opened outside Focus Mode',
-        'switch-tab': 'This tab is not in your focus set',
-      };
-      const text = messages[reason] || 'Action blocked — Focus Mode active';
-
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: (msg) => {
-          // Avoid duplicates
-          const existing = document.getElementById('__tabpilot_focus_notif');
-          if (existing) existing.remove();
-
-          const host = document.createElement('div');
-          host.id = '__tabpilot_focus_notif';
-          Object.assign(host.style, {
-            position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%) translateY(-20px)',
-            zIndex: '2147483647', opacity: '0',
-            transition: 'transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, sans-serif",
-            pointerEvents: 'none',
-          });
-
-          const card = document.createElement('div');
-          Object.assign(card.style, {
-            display: 'flex', alignItems: 'center', gap: '10px',
-            padding: '12px 20px', background: '#1a1a2e',
-            border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.35)', whiteSpace: 'nowrap',
-          });
-
-          const icon = document.createElement('div');
-          Object.assign(icon.style, {
-            width: '28px', height: '28px', borderRadius: '7px',
-            background: 'rgba(99,102,241,0.15)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', flexShrink: '0',
-          });
-          icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
-
-          const textWrap = document.createElement('div');
-          const title = document.createElement('div');
-          Object.assign(title.style, { fontSize: '13px', fontWeight: '600', color: '#f1f5f9', lineHeight: '1.3' });
-          title.textContent = msg;
-          const desc = document.createElement('div');
-          Object.assign(desc.style, { fontSize: '11px', color: '#94a3b8', lineHeight: '1.3', marginTop: '2px' });
-          desc.textContent = 'Exit Focus Mode to access other tabs';
-          textWrap.appendChild(title);
-          textWrap.appendChild(desc);
-
-          card.appendChild(icon);
-          card.appendChild(textWrap);
-          host.appendChild(card);
-          document.documentElement.appendChild(host);
-
-          // Animate in
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              host.style.opacity = '1';
-              host.style.transform = 'translateX(-50%) translateY(0)';
-            });
-          });
-
-          // Auto-remove after 3s
-          setTimeout(() => {
-            host.style.opacity = '0';
-            host.style.transform = 'translateX(-50%) translateY(-20px)';
-            setTimeout(() => host.remove(), 400);
-          }, 3000);
-        },
-        args: [text],
-      }).catch(() => {});
-    } catch {}
-  }, 300);
 }
 
 // Re-collapse hidden groups AND move them to the end (user may have expanded them)
@@ -600,9 +329,13 @@ const IDLE_THRESHOLD_S = 60;
 
 function timeDomain(url) {
   try {
-    const h = new URL(url).hostname.replace(/^www\./, '');
-    if (!h || h.startsWith('chrome') || h === 'newtab') return null;
-    return h;
+    const u = new URL(url);
+    // Only track real web pages. Checking the protocol (not the hostname)
+    // keeps chrome:// internals out — chrome://extensions has hostname
+    // "extensions", which used to slip through and show up as a "site".
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    const h = u.hostname.replace(/^www\./, '');
+    return h || null;
   } catch { return null; }
 }
 

@@ -73,7 +73,7 @@ export function AutoClosePanel({ allTabs, onClose, onAutoClose, settings, onUpda
     const now = Date.now();
     return allTabs
       .filter(tab => {
-        // Skip active, pinned, and recently visited (via Tab Pilot click) tabs
+        // Skip active, pinned, and recently visited (via Tab Radar click) tabs
         if (tab.active || tab.pinned) return false;
         if (visitCounts[tab.id]) return false;
         const domain = getDomain(tab.url);

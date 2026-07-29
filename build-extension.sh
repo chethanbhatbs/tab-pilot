@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Tab Pilot Extension Builder
+# Tab Radar Extension Builder
 # Run from anywhere: bash build-extension.sh
 # Builds the React app and packages it into extension/tabpilot/sidepanel.
 # =============================================================================
@@ -21,9 +21,14 @@ else
   exit 1
 fi
 
+# Single source of truth for the version the UI shows: manifest.json. The web
+# build has no chrome.runtime to read it from, so bake it in here.
+APP_VERSION=$(node -p "require('$ROOT/extension/tabpilot/manifest.json').version")
+echo "==> Version from manifest: $APP_VERSION"
+
 echo "==> Building React app for Chrome Extension (using: $RUN)..."
 cd "$FRONTEND"
-PUBLIC_URL="." GENERATE_SOURCEMAP=false $RUN build
+PUBLIC_URL="." GENERATE_SOURCEMAP=false REACT_APP_VERSION="$APP_VERSION" $RUN build
 
 echo "==> Packaging extension..."
 JS_FILE=$(basename "$(ls -t "$FRONTEND"/build/static/js/main.*.js | head -1)")
@@ -32,6 +37,7 @@ echo "    JS:  $JS_FILE"
 echo "    CSS: $CSS_FILE"
 
 rm -rf "$EXT_SIDEPANEL/static" "$EXT_SIDEPANEL/asset-manifest.json" "$EXT_SIDEPANEL/index.html"
+mkdir -p "$EXT_SIDEPANEL"
 cp -r "$FRONTEND/build/static" "$EXT_SIDEPANEL/static"
 cp "$FRONTEND/build/asset-manifest.json" "$EXT_SIDEPANEL/asset-manifest.json"
 
@@ -41,10 +47,7 @@ cat > "$EXT_SIDEPANEL/index.html" << HTMLEOF
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Tab Pilot</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <title>Tab Radar</title>
   <link href="./static/css/${CSS_FILE}" rel="stylesheet"/>
 </head>
 <body>
@@ -59,6 +62,6 @@ echo "==> Done! Extension is in $ROOT/extension/tabpilot/"
 echo ""
 echo "  To install / update:"
 echo "  1. chrome://extensions/ -> Developer mode ON -> Load unpacked (first time)"
-echo "  2. After rebuilds, click the reload icon on the Tab Pilot card"
-echo "  3. Reload any open tabs so the content script re-injects"
+echo "  2. After rebuilds, click the reload icon on the Tab Radar card"
+echo "  3. Reopen the side panel to pick up the new build"
 echo ""

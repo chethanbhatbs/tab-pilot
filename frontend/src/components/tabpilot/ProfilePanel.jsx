@@ -3,7 +3,8 @@ import { Users, ArrowRightLeft, AlertTriangle, RefreshCw, Check, ShieldCheck, Co
 import { toast } from 'sonner';
 import {
   isExtensionContext, chromeNativeHostPing, chromeGetProfiles, chromeSwitchProfile,
-  chromeStorageGet, chromeStorageSet, chromeCreateProfile
+  chromeStorageGet, chromeStorageSet, chromeCreateProfile,
+  chromeHasNativePermission, chromeRequestNativePermission,
 } from '@/utils/chromeAdapter';
 
 const MOCK_PROFILES = [
@@ -31,6 +32,7 @@ export function ProfilePanel() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hostAvailable, setHostAvailable] = useState(null);
+  const [needsPermission, setNeedsPermission] = useState(false);
   const [switching, setSwitching] = useState(null);
   const [currentProfile, setCurrentProfile] = useState(null);
   const [hiddenProfiles, setHiddenProfiles] = useState([]);
@@ -45,6 +47,15 @@ export function ProfilePanel() {
       setLoading(false);
       return;
     }
+
+    // nativeMessaging is optional — until the user grants it, don't even ping.
+    if (!(await chromeHasNativePermission())) {
+      setNeedsPermission(true);
+      setHostAvailable(false);
+      setLoading(false);
+      return;
+    }
+    setNeedsPermission(false);
 
     const pingResult = await chromeNativeHostPing();
     if (!pingResult || pingResult.error) {
@@ -77,7 +88,7 @@ export function ProfilePanel() {
   const handleSwitch = useCallback(async (profileDirectory, profileName) => {
     if (switching) return;
     setSwitching(profileDirectory);
-    const result = await chromeSwitchProfile(profileDirectory, 'https://github.com/chethan-sudo/chrome-pilot');
+    const result = await chromeSwitchProfile(profileDirectory, 'https://github.com/chethanbhatbs/tab-radar');
     if (result?.success) {
       toast.success(`Opening "${profileName}" — check GitHub for install instructions`);
     } else {
@@ -101,7 +112,7 @@ export function ProfilePanel() {
     const updated = [...hiddenProfiles, directory];
     setHiddenProfiles(updated);
     chromeStorageSet({ tabpilot_hidden_profiles: updated });
-    toast.success(`"${p?.name || directory}" removed from Tab Pilot`);
+    toast.success(`"${p?.name || directory}" removed from Tab Radar`);
   }, [profiles, hiddenProfiles]);
 
   const handleSelectAsMe = useCallback((directory) => {
@@ -132,6 +143,38 @@ export function ProfilePanel() {
         <Header />
         <div className="text-[11px] text-muted-foreground/70 text-center py-8 font-body animate-pulse">
           Checking native host...
+        </div>
+      </div>
+    );
+  }
+
+  // Optional permission not granted yet — profile switching is fully opt-in
+  if (needsPermission) {
+    return (
+      <div className="p-3 space-y-3" data-testid="profile-panel">
+        <Header />
+        <div className="rounded-lg border border-border/50 bg-card p-2.5 space-y-2.5">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck size={11} className="text-primary" strokeWidth={2} />
+            <span className="text-[11px] font-heading font-semibold text-foreground/90">Optional Feature</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
+            Switching Chrome profiles from Tab Radar needs the <span className="font-mono">nativeMessaging</span> permission.
+            It is off by default and only ever talks to a small local helper you install yourself — nothing is requested until you enable it here.
+          </p>
+          <button
+            onClick={async () => {
+              const granted = await chromeRequestNativePermission();
+              if (granted) loadProfiles();
+              else toast.error('Permission not granted');
+            }}
+            className="cursor-pointer w-full h-7 text-[10px] font-heading font-semibold rounded-md
+              bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+            data-testid="profile-grant-permission-btn"
+          >
+            <Users size={10} strokeWidth={1.5} />
+            Enable profile switching
+          </button>
         </div>
       </div>
     );
@@ -174,7 +217,7 @@ export function ProfilePanel() {
           <div className="flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-primary/[0.04] border border-primary/10">
             <ShieldCheck size={11} className="text-primary shrink-0 mt-0.5" strokeWidth={2} />
             <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
-              <span className="font-semibold text-primary">100% Safe</span> — The script only reads Chrome's profile names (not passwords, history, or browsing data). It makes zero network requests. You can <a href="#" onClick={(e) => { e.preventDefault(); if (isExtensionContext()) chrome.tabs.create({ url: 'https://github.com/chethan-sudo/chrome-pilot/blob/main/native-host/tabpilot_profiles.py' }); }} className="underline text-primary/80 hover:text-primary">review the source code</a>.
+              <span className="font-semibold text-primary">100% Safe</span> — The script only reads Chrome's profile names (not passwords, history, or browsing data). It makes zero network requests. You can <a href="#" onClick={(e) => { e.preventDefault(); if (isExtensionContext()) chrome.tabs.create({ url: 'https://github.com/chethanbhatbs/tab-radar/blob/main/native-host/tabpilot_profiles.py' }); }} className="underline text-primary/80 hover:text-primary">review the source code</a>.
             </p>
           </div>
 
@@ -287,7 +330,7 @@ export function ProfilePanel() {
                   onClick={() => handleRemoveFromExtension(profile.directory)}
                   className="cursor-pointer p-1.5 rounded-md text-muted-foreground/40 hover:text-destructive
                     hover:bg-destructive/10 transition-colors shrink-0"
-                  title="Remove from Tab Pilot"
+                  title="Remove from Tab Radar"
                   data-testid={`remove-profile-${profile.directory}`}
                 >
                   <Trash2 size={11} strokeWidth={1.5} />

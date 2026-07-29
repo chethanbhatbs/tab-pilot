@@ -106,6 +106,13 @@ export function SettingsPanel({ settings, onUpdate, onOpenProfiles }) {
           onChange={(v) => onUpdate('confirmActions', v)}
           testId="setting-confirm-actions"
         />
+        <SettingToggle
+          label="Smart duplicate matching"
+          description="Treat tabs opening the same document as duplicates, even at different sections (e.g. two worksheets of one Google Sheet). Off = exact same URL only"
+          checked={settings.smartDuplicateMatching}
+          onChange={(v) => onUpdate('smartDuplicateMatching', v)}
+          testId="setting-smart-duplicates"
+        />
       </div>
 
       {onOpenProfiles && (

@@ -16,7 +16,7 @@ import {
   chromeCreateNewTab, chromeCreateTabInWindow, chromeCreateNewWindow,
   chromeCloseWindow, chromeMinimizeWindow, chromeMuteAll, chromeUnmuteAll,
   chromeCloseDuplicates, chromeRestoreSession, chromeDiscardTab, chromeReloadTab, chromeHideTabs, chromeUnhideTabs, chromeOnTabsUpdated,
-  chromeUndoCloseTab, chromeStorageGet, chromeStorageSet,
+  chromeUndoCloseTab, chromeUndoCloseTabs, chromeCloseTabs, chromeStorageGet, chromeStorageSet,
 } from '@/utils/chromeAdapter';
 
 /**
@@ -36,9 +36,9 @@ export function useChromeTabs() {
   const debounceRef = useRef(null);
   // Track lastAccessed ourselves — chrome.tabs.query() doesn't return it reliably
   const lastAccessedRef = useRef({});
-  // Signatures of the last applied state — used to skip no-op re-renders. The 5s
-  // poll fires constantly; without this the whole tree re-renders even when
-  // nothing changed, which is the main render cost at high tab counts.
+  // Signatures of the last applied state — used to skip no-op re-renders when a
+  // burst of tab events triggers refreshes that resolve to identical state,
+  // which is the main render cost at high tab counts.
   const winSigRef = useRef('');
   const groupSigRef = useRef('');
 
@@ -95,9 +95,12 @@ export function useChromeTabs() {
     // Track tab activation — chrome.tabs.query doesn't return lastAccessed reliably
     const onActivated = (info) => { lastAccessedRef.current[info.tabId] = Date.now(); };
     chrome.tabs.onActivated.addListener(onActivated);
-    // Reduced polling: 5s instead of 1s (events already trigger debounced refreshes)
-    const interval = setInterval(() => refreshRef.current?.(), 5000);
-    return () => { clearTimeout(t1); if (debounceRef.current) clearTimeout(debounceRef.current); cleanup(); chrome.tabs.onActivated.removeListener(onActivated); clearInterval(interval); };
+    // No polling: tab/window/group events (direct + background 'tabs-updated'
+    // messages) drive every refresh. Re-sync once when the panel becomes
+    // visible again, in case an event landed while it was hidden.
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshRef.current?.(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearTimeout(t1); if (debounceRef.current) clearTimeout(debounceRef.current); cleanup(); chrome.tabs.onActivated.removeListener(onActivated); document.removeEventListener('visibilitychange', onVisible); };
   }, [refresh]);
 
   // Merge stored window names into windows — stable sequential fallback names
@@ -158,8 +161,16 @@ export function useChromeTabs() {
     await chromeCloseTab(tabId);
   }, []);
 
+  const closeTabs = useCallback(async (tabIds) => {
+    return await chromeCloseTabs(tabIds);
+  }, []);
+
   const undoCloseTab = useCallback(async () => {
     return await chromeUndoCloseTab();
+  }, []);
+
+  const undoCloseTabs = useCallback(async (count) => {
+    return await chromeUndoCloseTabs(count);
   }, []);
 
   const pinTab = useCallback(async (tabId) => {
@@ -230,12 +241,9 @@ export function useChromeTabs() {
     await chromeMoveTab(tabId, windowId, newIndex);
   }, []);
 
-  const closeOtherTabs = useCallback(async (tabId, windowId) => {
-    const win = windows.find(w => w.id === windowId);
-    if (!win) return;
-    const toClose = win.tabs.filter(t => t.id !== tabId).map(t => t.id);
-    for (const id of toClose) await chromeCloseTab(id);
-  }, [windows]);
+  // closeOtherTabs used to live here, but it disagreed with the side panel's
+  // "Close rest" (it killed pinned tabs and never confirmed). Both context-menu
+  // and bulk paths now go through Sidebar's single handler on top of closeTabs.
 
   const closeTabsToRight = useCallback(async (tabId, windowId) => {
     const win = windows.find(w => w.id === windowId);
@@ -256,14 +264,21 @@ export function useChromeTabs() {
     if (tab) await chromeSwitchToTab(tabId, tab.windowId);
   }, [allTabs]);
 
-  const suspendInactive = useCallback(async () => {
+  // Returns { attempted, suspended }: Chrome refuses to discard some tabs (still
+  // loading, playing media, and so on), so the two numbers can differ and the
+  // caller needs both to say something truthful. Only the tabs Chrome actually
+  // discarded go into the optimistic overlay.
+  const suspendBackgroundTabs = useCallback(async () => {
     const toSuspend = [];
     windows.forEach(w => w.tabs?.forEach(t => {
       if (!t.active && !t.pinned && !t.audible && !t.discarded) toSuspend.push(t.id);
     }));
-    setPendingSuspend(prev => new Set([...prev, ...toSuspend]));
-    for (const id of toSuspend) await chromeDiscardTab(id);
-    return toSuspend.length;
+    const done = [];
+    for (const id of toSuspend) {
+      if (await chromeDiscardTab(id)) done.push(id);
+    }
+    if (done.length > 0) setPendingSuspend(prev => new Set([...prev, ...done]));
+    return { attempted: toSuspend.length, suspended: done.length };
   }, [windows]);
 
   // Actually reload every discarded tab so they're truly un-suspended (the old
@@ -299,12 +314,12 @@ export function useChromeTabs() {
 
   return {
     windows: windowsWithNames, tabGroups, allTabs, suspendedTabs, tabNotes,
-    switchToTab, closeTab, undoCloseTab, pinTab, muteTab, duplicateTab,
+    switchToTab, closeTab, closeTabs, undoCloseTab, undoCloseTabs, pinTab, muteTab, duplicateTab,
     moveTab, moveTabToNewWindow, closeWindow, minimizeWindow,
     createNewTab, createTabInWindow, createNewWindow, renameWindow,
     muteAll, unmuteAll, closeDuplicates,
-    reorderTab, closeOtherTabs, closeTabsToRight,
-    suspendTab, unsuspendTab, suspendInactive, unsuspendAll,
+    reorderTab, closeTabsToRight,
+    suspendTab, unsuspendTab, suspendBackgroundTabs, unsuspendAll,
     setTabNote, refresh, restoreSession, hideTabs, unhideTabs,
   };
 }

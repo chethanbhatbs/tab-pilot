@@ -4,6 +4,7 @@ import {
   Command, Star, ChevronDown, Zap, Trash2, MousePointer, Eye,
   Lightbulb, LayoutGrid, Copy, Clock
 } from 'lucide-react';
+import { getAppVersion } from '@/utils/chromeAdapter';
 
 function Section({ icon: Icon, iconColor, title, defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -42,9 +43,13 @@ function ShortcutRow({ keys, action }) {
 }
 
 export function HelpPanel({ onBack }) {
+  // Read from the manifest instead of hardcoding — the old literal drifted to a
+  // stale version. Hidden entirely when no version is available.
+  const appVersion = getAppVersion();
+
   const handleFeedback = () => {
-    const subject = encodeURIComponent('Tab Pilot Feedback');
-    const body = encodeURIComponent('Hi,\n\nI have the following feedback about Tab Pilot:\n\n');
+    const subject = encodeURIComponent('Tab Radar Feedback');
+    const body = encodeURIComponent('Hi,\n\nI have the following feedback about Tab Radar:\n\n');
     window.open(`mailto:bschethanbhat@gmail.com?subject=${subject}&body=${body}`, '_blank');
   };
 
@@ -52,10 +57,12 @@ export function HelpPanel({ onBack }) {
     <div className="p-3 space-y-2" data-testid="help-panel">
       {/* Hero */}
       <div className="text-center py-3">
-        <h1 className="text-[16px] font-heading font-bold text-foreground tracking-tight brand-text">Tab Pilot</h1>
+        <h1 className="text-[16px] font-heading font-bold text-foreground tracking-tight brand-text">Tab Radar</h1>
         <p className="text-[11px] text-muted-foreground/70 font-body mt-0.5">Your browser, mastered.</p>
         <div className="flex items-center justify-center gap-2 mt-2">
-          <span className="text-[11px] font-mono text-muted-foreground/50 bg-secondary px-1.5 py-0.5 rounded">v1.2.0</span>
+          {appVersion && (
+            <span className="text-[11px] font-mono text-muted-foreground/50 bg-secondary px-1.5 py-0.5 rounded">v{appVersion}</span>
+          )}
           <span className="text-[11px] font-mono text-primary/70 bg-primary/[0.08] px-1.5 py-0.5 rounded inline-flex items-center gap-1">
             <ShieldCheck size={9} strokeWidth={2} /> 100% local
           </span>
@@ -97,7 +104,8 @@ export function HelpPanel({ onBack }) {
           <FeatureItem icon={Focus} text="Focus Mode highlights your chosen tabs and dims the rest" />
           <FeatureItem icon={Eye} text="Gently nudges you back if you stray — nothing is closed" />
           <FeatureItem icon={Copy} text="Select mode for bulk-closing multiple tabs at once" />
-          <FeatureItem icon={Pause} text="Suspend inactive tabs to free memory" />
+          <FeatureItem icon={Trash2} text={'"Close rest" keeps the tabs you selected and closes everything else (pinned tabs stay)'} />
+          <FeatureItem icon={Pause} text="Suspend background tabs (everything except the one you are on) to free memory" />
         </div>
       </Section>
 

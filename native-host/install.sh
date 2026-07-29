@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Tab Pilot Native Host Installer (macOS / Linux)
-# Installs the tiny helper that lets Tab Pilot read your Chrome profile names
+# Tab Radar Native Host Installer (macOS / Linux)
+# Installs the tiny helper that lets Tab Radar read your Chrome profile names
 # so it can list and switch between them.
 #
 # Zero questions asked: the script finds its OWN location and auto-detects the
-# Tab Pilot extension ID by scanning your Chrome profiles (works for both
+# Tab Radar extension ID by scanning your Chrome profiles (works for both
 # unpacked/dev and Web Store installs). Just run it and restart Chrome.
 set -e
 
@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HOST_SCRIPT="$SCRIPT_DIR/tabpilot_profiles.py"
 
 echo ""
-echo "  Tab Pilot Native Host Installer"
+echo "  Tab Radar Native Host Installer"
 echo "  ==============================="
 echo ""
 
@@ -62,7 +62,7 @@ EXT_IDS="${1:-}"
 if [ -n "$EXT_IDS" ]; then
   echo "  Using extension ID provided: $EXT_IDS"
 else
-echo "  Looking for the Tab Pilot extension in your browsers..."
+echo "  Looking for the Tab Radar extension in your browsers..."
 EXT_IDS="$("$PY" - <<'PYEOF'
 import json, os, glob
 home = os.path.expanduser("~")
@@ -109,8 +109,8 @@ fi
 
 # 5. Fall back to a manual prompt ONLY if auto-detect found nothing
 if [ -z "$EXT_IDS" ]; then
-  echo "  Couldn't auto-detect Tab Pilot (is it loaded in Chrome?)."
-  echo "  Open chrome://extensions, enable Developer mode, copy the Tab Pilot ID,"
+  echo "  Couldn't auto-detect Tab Radar (is it loaded in Chrome?)."
+  echo "  Open chrome://extensions, enable Developer mode, copy the Tab Radar ID,"
   read -p "  and paste it here: " EXT_IDS
   if [ -z "$EXT_IDS" ]; then
     echo "  ERROR: No extension ID. Re-run after loading the extension."
@@ -137,7 +137,7 @@ for NM_DIR in "${NM_DIRS[@]}"; do
   cat > "$NM_DIR/$HOST_NAME.json" <<EOF
 {
   "name": "$HOST_NAME",
-  "description": "Tab Pilot Chrome Profile Manager",
+  "description": "Tab Radar Chrome Profile Manager",
   "path": "$HOST_SCRIPT",
   "type": "stdio",
   "allowed_origins": [
@@ -156,5 +156,5 @@ fi
 
 echo ""
 echo "  DONE. Next: quit Chrome completely (Cmd+Q) and reopen it,"
-echo "  then open the Tab Pilot Profiles panel."
+echo "  then open the Tab Radar Profiles panel."
 echo ""

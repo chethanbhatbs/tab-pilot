@@ -61,7 +61,7 @@ function TabItemImpl({
               ? 'bg-primary/[0.16] text-foreground font-medium'
               : 'hover:bg-[hsl(var(--hover-subtle))] text-foreground/75'
             }
-            ${isSuspended ? 'opacity-35' : ''}
+            ${isSuspended ? 'opacity-60' : ''}
           `}
         >
 
@@ -87,12 +87,15 @@ function TabItemImpl({
 
           {/* Favicon + status indicators */}
           <div className="w-4 h-4 shrink-0 flex items-center justify-center relative rounded bg-secondary/50">
-            {isLoading ? (
-              <Loader2 size={12} className="animate-spin text-primary" strokeWidth={1.5} />
-            ) : isSuspended ? (
+            {isSuspended ? (
               <Pause size={12} className="text-muted-foreground/40" strokeWidth={1.5} />
             ) : faviconUrl ? (
-              <img src={faviconUrl} alt="" className="w-4 h-4 rounded-[3px]" data-tab-url={tab.url} data-chrome-favicon={tab.favIconUrl || ''} onError={handleFaviconError} />
+              // Show the favicon straight away; only fall back to a spinner while
+              // loading if we have no icon at all. Hiding a known icon behind a
+              // spinner made every loading tab look like its favicon was slow.
+              <img src={faviconUrl} alt="" className="w-4 h-4 rounded-[3px]" decoding="async" data-tab-url={tab.url} data-chrome-favicon={tab.favIconUrl || ''} onError={handleFaviconError} />
+            ) : isLoading ? (
+              <Loader2 size={12} className="animate-spin text-primary" strokeWidth={1.5} />
             ) : (
               <div className="w-4 h-4 rounded-[3px] flex items-center justify-center text-[11px] font-bold"
                 style={{ background: avatar?.color.bg, color: avatar?.color.fg }}

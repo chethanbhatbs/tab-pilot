@@ -6,53 +6,54 @@ export function getDomain(url) {
   }
 }
 
-// Chrome caches favicons matching the site's active theme. When browsing in dark
-// mode, sites like GitHub/ChatGPT serve white/light favicons. Chrome stores these
-// (as SVG, data URI, or PNG). Displaying a white icon on Tab Pilot's light panel
-// makes it invisible. Fix: use Google S2 for public domains (always returns
-// properly colored PNG), Chrome's favicon only for internal/private domains.
-function _isInternalDomain(hostname) {
-  if (!hostname) return true;
-  // Private IPs
-  if (/^(localhost|127\.\d|10\.\d|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname)) return true;
-  // Internal TLDs / patterns
-  if (/\.(local|internal|intranet|corp|lan|test)$/i.test(hostname)) return true;
-  if (/\binternal\b/i.test(hostname)) return true;
-  // Single-word hostname (no dots)
-  if (!hostname.includes('.')) return true;
-  return false;
+// In the extension, favicons come from Chrome's built-in _favicon API (requires
+// the "favicon" permission): served from Chrome's local favicon cache, so no tab
+// URL ever leaves the browser. Only the hosted web demo (no chrome.* APIs) still
+// uses Google S2, since it has no local cache to read.
+const IS_EXTENSION_CTX = typeof chrome !== 'undefined' && !!chrome.runtime?.id && !!chrome.runtime?.getURL;
+
+function _localFaviconUrl(pageUrl, size = 32) {
+  const u = new URL(chrome.runtime.getURL('/_favicon/'));
+  u.searchParams.set('pageUrl', pageUrl);
+  u.searchParams.set('size', String(size));
+  return u.toString();
 }
 
 export function getFaviconUrl(url, chromeFavIconUrl) {
-  // Prefer Chrome's OWN favicon when it's a real http(s) non-SVG image; otherwise
-  // use Google S2 (colored PNG). On error, handleFaviconError() walks the
-  // fallback chain down to a letter avatar.
-  if (chromeFavIconUrl
-      && /^https?:\/\//i.test(chromeFavIconUrl)
-      && !/\.svg(\?|#|$)/i.test(chromeFavIconUrl)) {
-    return chromeFavIconUrl;
+  if (IS_EXTENSION_CTX) {
+    if (url) {
+      try {
+        // Look up by ORIGIN, not the full page URL: sites that swap in
+        // per-page favicons (GitHub's PR-status check/cross icons, notification
+        // badges) would otherwise replace their recognizable logo in the list.
+        const u = new URL(url);
+        const target = (u.protocol === 'http:' || u.protocol === 'https:') ? `${u.origin}/` : url;
+        return _localFaviconUrl(target);
+      } catch {}
+    }
+    return chromeFavIconUrl || null;
   }
+  // Web demo only: Google S2 (external request — never used inside the extension)
   try {
     const hostname = new URL(url).hostname;
-    // Internal/private domains: Chrome's favicon is the only source that works
-    // (external services like Google S2 can't reach internal networks)
-    if (_isInternalDomain(hostname)) {
-      return chromeFavIconUrl || null;
-    }
     return `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`;
   } catch {
     return chromeFavIconUrl || null;
   }
 }
 
-// Fallback chain (all PNG/ICO — no theme-dependent SVGs):
-// 1. Chrome's non-SVG favIconUrl OR Google S2 128px  (set by getFaviconUrl)
-// 2. DuckDuckGo icons service
-// 3. Direct site /favicon.ico
-// 4. Google S2 64px
-// 5. Clearbit Logo API
-// 6. Chrome's original favicon (SVG or not — last resort before letter avatar)
-// 7. Letter avatar
+// Favicon for a bare domain (heatmap, whitelist rows) — same local-first routing.
+export function getDomainFaviconUrl(domain, size = 32) {
+  if (!domain) return null;
+  if (IS_EXTENSION_CTX) {
+    try { return _localFaviconUrl(`https://${domain}/`, size); } catch { return null; }
+  }
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
+}
+
+// Fallback chain: primary source (set by getFaviconUrl) → Chrome's reported
+// favIconUrl → letter avatar. The _favicon API itself falls back to a neutral
+// globe icon rather than erroring, so this rarely fires in the extension.
 export function handleFaviconError(e) {
   const img = e.target;
   const src = img.src || '';
@@ -60,52 +61,12 @@ export function handleFaviconError(e) {
   const chromeFavicon = img.dataset.chromeFavicon || '';
   const tried = (img.dataset.faviconTried || '').split(',').filter(Boolean);
 
-  let domain = '';
-  try { domain = new URL(tabUrl || src).hostname; } catch {}
-  if (!domain) {
-    _showLetterAvatar(img, tabUrl || src);
-    return;
-  }
-
-  // Step 2: DuckDuckGo
-  if (!tried.includes('ddg')) {
-    img.dataset.faviconTried = [...tried, 'ddg'].join(',');
-    img.src = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-    return;
-  }
-
-  // Step 3: Direct /favicon.ico from the site
-  if (!tried.includes('direct')) {
-    try {
-      const origin = new URL(tabUrl).origin;
-      img.dataset.faviconTried = [...tried, 'direct'].join(',');
-      img.src = `${origin}/favicon.ico`;
-      return;
-    } catch {}
-  }
-
-  // Step 4: Google S2 64px (different size sometimes returns different icon)
-  if (!tried.includes('google64')) {
-    img.dataset.faviconTried = [...tried, 'google64'].join(',');
-    img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-    return;
-  }
-
-  // Step 5: Clearbit Logo API
-  if (!tried.includes('clearbit')) {
-    img.dataset.faviconTried = [...tried, 'clearbit'].join(',');
-    img.src = `https://logo.clearbit.com/${domain}`;
-    return;
-  }
-
-  // Step 6: Chrome's original favicon (even SVG — better than nothing for internal apps)
   if (!tried.includes('chrome') && chromeFavicon && chromeFavicon !== src) {
     img.dataset.faviconTried = [...tried, 'chrome'].join(',');
     img.src = chromeFavicon;
     return;
   }
 
-  // Step 7: All sources exhausted → letter avatar
   _showLetterAvatar(img, tabUrl || src);
 }
 
@@ -162,6 +123,21 @@ function _showLetterAvatar(img, urlHint) {
   }
 }
 
+// Smart duplicate matching (default ON, Settings → "Smart duplicate matching"):
+// Google's editors encode the open worksheet/view in the URL (?gid= for Sheets),
+// so the same document opened twice looks like two different URLs. When enabled,
+// docs.google.com editor URLs collapse to their document ID so any view of the
+// same document counts as a duplicate. useSettings syncs the flag here so every
+// dedupe consumer (Sidebar, panels, chromeAdapter) applies one consistent rule.
+let _smartDupMatching = true;
+export function setSmartDuplicateMatching(enabled) {
+  _smartDupMatching = enabled !== false;
+}
+
+// Keeps the /u/<n>/ account segment: the same doc open under two different
+// Google accounts stays distinct, so dedupe never closes the other account's view.
+const GDOC_EDITOR_RE = /^\/(spreadsheets|document|presentation|forms)(\/u\/\d+)?\/d\/([^/]+)/;
+
 export function normalizeUrl(url) {
   if (!url) return url;
   // For chrome:// and chrome-extension:// URLs, use as-is (stripped of trailing slash)
@@ -170,6 +146,10 @@ export function normalizeUrl(url) {
   }
   try {
     const u = new URL(url);
+    if (_smartDupMatching && u.hostname === 'docs.google.com') {
+      const m = u.pathname.match(GDOC_EDITOR_RE);
+      if (m) return `${u.origin}/${m[1]}${m[2] || ''}/d/${m[3]}`;
+    }
     // Two tabs are duplicates only when they point to the SAME page. We ignore
     // the #hash (in-page anchors) but keep path + query, so different pages on
     // the same site (e.g. /inbox vs /compose) are NOT treated as duplicates.

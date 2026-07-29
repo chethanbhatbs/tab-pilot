@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { isExtensionContext, chromeStorageGet, chromeStorageSet } from '@/utils/chromeAdapter';
+import { setSmartDuplicateMatching } from '@/utils/grouping';
 
 const STORAGE_KEY = 'tabpilot_settings';
 
@@ -10,6 +11,7 @@ const DEFAULT_SETTINGS = {
   showFavicons: true,
   showUrls: true,
   confirmActions: false,
+  smartDuplicateMatching: true,
   showTabCountBadge: true,
   compactMode: false,
   // Auto-close rules (persisted so they survive panel switches)
@@ -22,7 +24,10 @@ const DEFAULT_SETTINGS = {
 function loadSettingsFromLocalStorage() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+    const settings = data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+    // Sync before first render so dedupe never runs one frame with the wrong rule
+    setSmartDuplicateMatching(settings.smartDuplicateMatching);
+    return settings;
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -71,6 +76,12 @@ export function useSettings() {
       return updated;
     });
   }, []);
+
+  // Keep the module-level dedupe rule in grouping.js in sync (covers
+  // chrome.storage loads and cross-window changes, not just local toggles)
+  useEffect(() => {
+    setSmartDuplicateMatching(settings.smartDuplicateMatching);
+  }, [settings.smartDuplicateMatching]);
 
   // Apply theme (light/dark)
   useEffect(() => {

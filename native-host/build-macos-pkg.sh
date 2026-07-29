@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds a double-click macOS installer (.pkg) for the Tab Pilot native host.
+# Builds a double-click macOS installer (.pkg) for the Tab Radar native host.
 # The installer needs NO terminal and NO extension-ID pasting from the user:
-# its postinstall auto-detects the Tab Pilot extension across all Chrome
+# its postinstall auto-detects the Tab Radar extension across all Chrome
 # profiles (packed AND unpacked), then writes the native-messaging manifest.
 #
 #   bash build-macos-pkg.sh           -> dist/TabPilot-Profiles.pkg  (unsigned)
@@ -53,7 +53,7 @@ exec "$PY" "$HOST_PY" "\$@"
 EOF
 chmod 755 "$WRAP" "$HOST_PY"
 
-# Auto-detect Tab Pilot extension IDs (packed + unpacked) across all profiles
+# Auto-detect Tab Radar extension IDs (packed + unpacked) across all profiles
 IDS="$("$PY" - "$USER_HOME" <<'PYEOF'
 import json, os, sys, glob
 home = sys.argv[1]
@@ -113,7 +113,7 @@ write_manifest () {
   cat > "$dir/$HOST_NAME.json" <<EOF
 {
   "name": "$HOST_NAME",
-  "description": "Tab Pilot Chrome Profile Manager",
+  "description": "Tab Radar Chrome Profile Manager",
   "path": "$WRAP",
   "type": "stdio",
   "allowed_origins": [

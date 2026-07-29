@@ -4,6 +4,8 @@ import { MOCK_WINDOWS, MOCK_TAB_GROUPS, INITIAL_TAB_NOTES } from '@/utils/mockDa
 let nextTabId = 400;
 let nextWindowId = 4;
 
+const MAX_CLOSED_HISTORY = 50;
+
 export function useMockTabs() {
   const [windows, setWindows] = useState(MOCK_WINDOWS);
   const [tabGroups] = useState(MOCK_TAB_GROUPS);
@@ -27,6 +29,7 @@ export function useMockTabs() {
     })));
   }, []);
 
+  // Deep enough that undoing a bulk close actually brings everything back.
   const closedTabHistory = useRef([]);
 
   const closeTab = useCallback((tabId) => {
@@ -40,7 +43,7 @@ export function useMockTabs() {
       });
       if (closedTab) {
         closedTabHistory.current = [
-          ...closedTabHistory.current.slice(-9),
+          ...closedTabHistory.current.slice(-(MAX_CLOSED_HISTORY - 1)),
           { ...closedTab, windowId: closedWindowId }
         ];
       }
@@ -48,24 +51,46 @@ export function useMockTabs() {
     });
   }, []);
 
-  const undoCloseTab = useCallback(() => {
-    const history = closedTabHistory.current;
-    if (history.length === 0) return false;
-    const lastClosed = history[history.length - 1];
-    closedTabHistory.current = history.slice(0, -1);
+  // Batch equivalent of closeTab — one state pass, mirrors chrome.tabs.remove(array).
+  const closeTabs = useCallback((tabIds) => {
+    const ids = new Set(tabIds || []);
+    if (ids.size === 0) return 0;
     setWindows(prev => {
-      const winExists = prev.find(w => w.id === lastClosed.windowId);
-      if (winExists) {
-        return prev.map(w => w.id === lastClosed.windowId
-          ? { ...w, tabs: [...w.tabs, { ...lastClosed, active: false }] }
-          : w
-        );
-      }
-      // Window was closed — create it
-      return [...prev, { id: lastClosed.windowId, focused: false, tabs: [{ ...lastClosed, active: false }] }];
+      const closed = [];
+      const updated = prev.map(w => {
+        w.tabs.forEach(t => { if (ids.has(t.id)) closed.push({ ...t, windowId: w.id }); });
+        return { ...w, tabs: w.tabs.filter(t => !ids.has(t.id)) };
+      });
+      closedTabHistory.current = [
+        ...closedTabHistory.current, ...closed
+      ].slice(-MAX_CLOSED_HISTORY);
+      return updated.filter(w => w.tabs.length > 0);
     });
-    return true;
+    return ids.size;
   }, []);
+
+  const undoCloseTabs = useCallback((count = 1) => {
+    const history = closedTabHistory.current;
+    if (history.length === 0) return 0;
+    const toRestore = history.slice(-Math.max(1, count));
+    closedTabHistory.current = history.slice(0, history.length - toRestore.length);
+    setWindows(prev => {
+      let next = prev;
+      for (const tab of toRestore) {
+        const winExists = next.find(w => w.id === tab.windowId);
+        next = winExists
+          ? next.map(w => w.id === tab.windowId
+              ? { ...w, tabs: [...w.tabs, { ...tab, active: false }] }
+              : w)
+          // Window was closed — recreate it
+          : [...next, { id: tab.windowId, focused: false, tabs: [{ ...tab, active: false }] }];
+      }
+      return next;
+    });
+    return toRestore.length;
+  }, []);
+
+  const undoCloseTab = useCallback(() => undoCloseTabs(1) > 0, [undoCloseTabs]);
 
   const pinTab = useCallback((tabId) => {
     setWindows(prev => prev.map(w => ({
@@ -271,11 +296,8 @@ export function useMockTabs() {
     }));
   }, []);
 
-  const closeOtherTabs = useCallback((tabId, windowId) => {
-    setWindows(prev => prev.map(w =>
-      w.id === windowId ? { ...w, tabs: w.tabs.filter(t => t.id === tabId) } : w
-    ));
-  }, []);
+  // closeOtherTabs removed on purpose — see the note in useChromeTabs. The single
+  // implementation now lives in Sidebar and runs through closeTabs.
 
   const closeTabsToRight = useCallback((tabId, windowId) => {
     setWindows(prev => prev.map(w => {
@@ -293,13 +315,15 @@ export function useMockTabs() {
     setSuspendedTabs(prev => { const n = new Set(prev); n.delete(tabId); return n; });
   }, []);
 
-  const suspendInactive = useCallback(() => {
+  // Same { attempted, suspended } shape as the Chrome hook — the demo has nothing
+  // that can refuse, so the two always match.
+  const suspendBackgroundTabs = useCallback(async () => {
     const toSuspend = new Set();
     windows.forEach(w => w.tabs.forEach(t => {
       if (!t.active && !t.pinned && !t.audible) toSuspend.add(t.id);
     }));
     setSuspendedTabs(toSuspend);
-    return toSuspend.size;
+    return { attempted: toSuspend.size, suspended: toSuspend.size };
   }, [windows]);
 
   const unsuspendAll = useCallback(() => {
@@ -325,12 +349,12 @@ export function useMockTabs() {
 
   return {
     windows, tabGroups, allTabs, suspendedTabs, tabNotes,
-    switchToTab, closeTab, undoCloseTab, pinTab, muteTab, duplicateTab,
+    switchToTab, closeTab, closeTabs, undoCloseTab, undoCloseTabs, pinTab, muteTab, duplicateTab,
     moveTab, moveTabToNewWindow, closeWindow, minimizeWindow,
     createNewTab, createNewWindow, createTabInWindow, renameWindow,
     muteAll, unmuteAll, closeDuplicates,
-    reorderTab, closeOtherTabs, closeTabsToRight,
-    suspendTab, unsuspendTab, suspendInactive, unsuspendAll,
+    reorderTab, closeTabsToRight,
+    suspendTab, unsuspendTab, suspendBackgroundTabs, unsuspendAll,
     setTabNote, hideTabs, unhideTabs, restoreSession,
   };
 }

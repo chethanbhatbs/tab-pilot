@@ -10,7 +10,7 @@ import {
   Shield, Cpu, Clock, Star, Link
 } from 'lucide-react';
 
-export default function TabPilotPreview() {
+export default function TabRadarPreview() {
   const [sidebarWidth, setSidebarWidth] = useState(380);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isDragging = useRef(false);
@@ -106,7 +106,7 @@ export default function TabPilotPreview() {
               hover:border-primary/30 transition-all shadow-lg shadow-black/20"
           >
             <PanelLeftOpen size={14} strokeWidth={1.5} />
-            <span className="text-[11px] font-body font-medium">Tab Pilot</span>
+            <span className="text-[11px] font-body font-medium">Tab Radar</span>
           </button>
         )}
         <LandingPage />
@@ -126,7 +126,7 @@ function LandingPage() {
       <BottomCTA />
       <footer className="text-center py-6 border-t border-border/20">
         <p className="text-[11px] text-muted-foreground/30 font-mono">
-          Tab Pilot v1.0 &middot; Manifest V3 &middot; React 18 &middot; Open Source
+          Tab Radar v1.0 &middot; Manifest V3 &middot; React 18 &middot; Open Source
         </p>
       </footer>
     </div>
@@ -149,7 +149,7 @@ function HeroSection() {
           </div>
           <div>
             <h1 className="text-3xl font-heading font-black tracking-tight leading-none">
-              <span className="text-foreground">Tab</span> <span className="text-primary">Pilot</span>
+              <span className="text-foreground">Tab</span> <span className="text-primary">Radar</span>
             </h1>
             <p className="text-xs text-muted-foreground/50 font-mono mt-0.5">Chrome Tab & Window Manager</p>
           </div>
@@ -165,7 +165,7 @@ function HeroSection() {
           <button
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText('https://chrome-pilot.preview.emergentagent.com');
+                await navigator.clipboard.writeText('https://github.com/chethanbhatbs/tab-radar/releases/latest/download/tab-radar.zip');
                 toast.success('Link copied!', { duration: 2000 });
               } catch {
                 toast.success('Link copied!', { duration: 2000 });
@@ -182,7 +182,7 @@ function HeroSection() {
           <button
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText('https://chrome-pilot.preview.emergentagent.com');
+                await navigator.clipboard.writeText('https://github.com/chethanbhatbs/tab-radar/releases/latest/download/tab-radar.zip');
               } catch { /* permissions not granted */ }
               toast.success('Install link copied!', { duration: 2000 });
             }}
@@ -237,7 +237,7 @@ function FeatureGrid() {
     { icon: Focus, color: 'text-violet-400', bg: 'bg-violet-400/10', title: 'Focus Mode',
       desc: 'Pick your focus tabs, start a timer, and everything else fades away. Distraction-free deep work.' },
     { icon: Pause, color: 'text-amber-400', bg: 'bg-amber-400/10', title: 'Tab Suspension',
-      desc: 'Reclaim memory by suspending inactive tabs. They stay in your tree but free up system resources.' },
+      desc: 'Reclaim memory by suspending background tabs. They stay in your tree but free up system resources.' },
     { icon: Layers, color: 'text-orange-400', bg: 'bg-orange-400/10', title: 'Duplicate Detection',
       desc: 'Spots URLs open in multiple tabs and highlights them. Close extras with one click, keeping one of each.' },
     { icon: Briefcase, color: 'text-sky-400', bg: 'bg-sky-400/10', title: 'Smart Workspaces',
@@ -279,7 +279,7 @@ function FeatureGrid() {
 function HowItWorks() {
   const steps = [
     { num: '1', title: 'Install the extension', desc: 'One click from the Chrome Web Store. No sign-up, no configuration needed.' },
-    { num: '2', title: 'Open the sidebar', desc: 'Click the Tab Pilot icon or use a keyboard shortcut to open the sidebar panel.' },
+    { num: '2', title: 'Open the sidebar', desc: 'Click the Tab Radar icon or use a keyboard shortcut to open the sidebar panel.' },
     { num: '3', title: 'Take control', desc: 'Search, organize, suspend, and manage all your tabs from one place.' },
   ];
   return (

@@ -1,39 +1,28 @@
 {
   "manifest_version": 3,
-  "name": "Tab Pilot",
-  "version": "1.2.0",
+  "name": "Tab Radar",
+  "version": "1.3.0",
   "description": "A keyboard-first command center for finding, switching, cleaning, and focusing Chrome tabs.",
   "permissions": [
     "tabs",
     "tabGroups",
-    "windows",
     "sidePanel",
     "storage",
     "sessions",
     "history",
-    "activeTab",
-    "scripting",
-    "nativeMessaging",
+    "favicon",
     "idle",
     "alarms"
   ],
-  "host_permissions": ["<all_urls>"],
+  "optional_permissions": ["nativeMessaging"],
   "side_panel": {
     "default_path": "sidepanel/index.html"
   },
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*", "file:///*"],
-      "js": ["content.js"],
-      "css": ["content.css"],
-      "run_at": "document_idle"
-    }
-  ],
   "action": {
-    "default_title": "Open Tab Pilot",
+    "default_title": "Open Tab Radar",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -46,28 +35,22 @@
         "default": "Ctrl+Shift+E",
         "mac": "Command+Shift+E"
       },
-      "description": "Toggle Tab Pilot sidebar"
+      "description": "Toggle Tab Radar sidebar"
     },
     "open-command-center": {
       "suggested_key": {
         "default": "Ctrl+Shift+K",
         "mac": "Command+Shift+K"
       },
-      "description": "Open Tab Pilot command center"
+      "description": "Open Tab Radar command center"
     }
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: http: https: blob:; connect-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["sidepanel/*", "sidepanel/static/**", "icons/*"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }

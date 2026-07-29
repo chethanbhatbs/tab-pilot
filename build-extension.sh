@@ -21,9 +21,14 @@ else
   exit 1
 fi
 
+# Single source of truth for the version the UI shows: manifest.json. The web
+# build has no chrome.runtime to read it from, so bake it in here.
+APP_VERSION=$(node -p "require('$ROOT/extension/tabpilot/manifest.json').version")
+echo "==> Version from manifest: $APP_VERSION"
+
 echo "==> Building React app for Chrome Extension (using: $RUN)..."
 cd "$FRONTEND"
-PUBLIC_URL="." GENERATE_SOURCEMAP=false $RUN build
+PUBLIC_URL="." GENERATE_SOURCEMAP=false REACT_APP_VERSION="$APP_VERSION" $RUN build
 
 echo "==> Packaging extension..."
 JS_FILE=$(basename "$(ls -t "$FRONTEND"/build/static/js/main.*.js | head -1)")

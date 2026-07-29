@@ -16,7 +16,7 @@ import {
   chromeCreateNewTab, chromeCreateTabInWindow, chromeCreateNewWindow,
   chromeCloseWindow, chromeMinimizeWindow, chromeMuteAll, chromeUnmuteAll,
   chromeCloseDuplicates, chromeRestoreSession, chromeDiscardTab, chromeReloadTab, chromeHideTabs, chromeUnhideTabs, chromeOnTabsUpdated,
-  chromeUndoCloseTab, chromeStorageGet, chromeStorageSet,
+  chromeUndoCloseTab, chromeUndoCloseTabs, chromeCloseTabs, chromeStorageGet, chromeStorageSet,
 } from '@/utils/chromeAdapter';
 
 /**
@@ -161,8 +161,16 @@ export function useChromeTabs() {
     await chromeCloseTab(tabId);
   }, []);
 
+  const closeTabs = useCallback(async (tabIds) => {
+    return await chromeCloseTabs(tabIds);
+  }, []);
+
   const undoCloseTab = useCallback(async () => {
     return await chromeUndoCloseTab();
+  }, []);
+
+  const undoCloseTabs = useCallback(async (count) => {
+    return await chromeUndoCloseTabs(count);
   }, []);
 
   const pinTab = useCallback(async (tabId) => {
@@ -233,12 +241,9 @@ export function useChromeTabs() {
     await chromeMoveTab(tabId, windowId, newIndex);
   }, []);
 
-  const closeOtherTabs = useCallback(async (tabId, windowId) => {
-    const win = windows.find(w => w.id === windowId);
-    if (!win) return;
-    const toClose = win.tabs.filter(t => t.id !== tabId).map(t => t.id);
-    for (const id of toClose) await chromeCloseTab(id);
-  }, [windows]);
+  // closeOtherTabs used to live here, but it disagreed with the side panel's
+  // "Close rest" (it killed pinned tabs and never confirmed). Both context-menu
+  // and bulk paths now go through Sidebar's single handler on top of closeTabs.
 
   const closeTabsToRight = useCallback(async (tabId, windowId) => {
     const win = windows.find(w => w.id === windowId);
@@ -302,11 +307,11 @@ export function useChromeTabs() {
 
   return {
     windows: windowsWithNames, tabGroups, allTabs, suspendedTabs, tabNotes,
-    switchToTab, closeTab, undoCloseTab, pinTab, muteTab, duplicateTab,
+    switchToTab, closeTab, closeTabs, undoCloseTab, undoCloseTabs, pinTab, muteTab, duplicateTab,
     moveTab, moveTabToNewWindow, closeWindow, minimizeWindow,
     createNewTab, createTabInWindow, createNewWindow, renameWindow,
     muteAll, unmuteAll, closeDuplicates,
-    reorderTab, closeOtherTabs, closeTabsToRight,
+    reorderTab, closeTabsToRight,
     suspendTab, unsuspendTab, suspendInactive, unsuspendAll,
     setTabNote, refresh, restoreSession, hideTabs, unhideTabs,
   };

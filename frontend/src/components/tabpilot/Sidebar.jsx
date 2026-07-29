@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { ArrowLeft, Timer, X as XIcon, Check, Minus, Trash2, Star, Flame, SlidersHorizontal, Pause, Play, VolumeX, Volume2, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Timer, X as XIcon, Check, Minus, Trash2, ListX, Star, Flame, SlidersHorizontal, Pause, Play, VolumeX, Volume2, ClipboardCheck } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -161,13 +161,89 @@ export function Sidebar({ onCollapse }) {
     });
   }, [tabs.windows]);
 
+  // How many windows vanish entirely if these ids go — the user deserves to know
+  // that before confirming, not after.
+  const countWindowsLost = useCallback((ids) => {
+    const closing = new Set(ids);
+    return filteredWindows.filter(w => w.tabs.length > 0 && w.tabs.every(t => closing.has(t.id))).length;
+  }, [filteredWindows]);
+
+  // Every bulk close goes through here: one batched remove, one toast, one undo.
+  const closeTabsWithUndo = useCallback((ids, summary) => {
+    tabs.closeTabs(ids);
+    toast.success(summary, {
+      duration: 6000,
+      action: {
+        label: 'Undo',
+        onClick: async () => {
+          const restored = await tabs.undoCloseTabs(ids.length);
+          toast.info(
+            restored > 0 ? `Restored ${restored} tab${restored > 1 ? 's' : ''}` : 'Nothing left to restore',
+            { duration: 2000 }
+          );
+        },
+      },
+    });
+  }, [tabs]);
+
   const handleBulkClose = useCallback(() => {
-    const count = selectedTabIds.size;
-    selectedTabIds.forEach(id => tabs.closeTab(id));
+    const ids = [...selectedTabIds];
+    if (ids.length === 0) return;
     setSelectedTabIds(new Set());
     setSelectMode(false);
-    toast.success(`Closed ${count} tab${count > 1 ? 's' : ''}`);
-  }, [selectedTabIds, tabs]);
+    closeTabsWithUndo(ids, `Closed ${ids.length} tab${ids.length > 1 ? 's' : ''}`);
+  }, [selectedTabIds, closeTabsWithUndo]);
+
+  // Inverse of bulk close: keep what's selected, close everything else. Scoped to
+  // filteredAllTabs so focus-mode hidden tabs are never touched, and pinned tabs
+  // are skipped to match Chrome's own "Close other tabs".
+  const othersToClose = useMemo(() => {
+    if (selectedTabIds.size === 0) return [];
+    return filteredAllTabs.filter(t => !selectedTabIds.has(t.id) && !t.pinned);
+  }, [filteredAllTabs, selectedTabIds]);
+
+  const handleCloseOthers = useCallback(() => {
+    const keptCount = selectedTabIds.size;
+    if (keptCount === 0) return;
+    const ids = othersToClose.map(t => t.id);
+    if (ids.length === 0) { toast.info('No other tabs to close'); return; }
+    const pinnedSkipped = filteredAllTabs.filter(t => !selectedTabIds.has(t.id) && t.pinned).length;
+    const windowsLost = countWindowsLost(ids);
+    // Always confirm, even when the "confirm actions" setting is off: this is the
+    // one action that can wipe out the whole window in a single click.
+    setConfirmPending({
+      message: `Close ${ids.length} other tab${ids.length > 1 ? 's' : ''} and keep the ${keptCount} selected?` +
+        (windowsLost > 0 ? ` This closes ${windowsLost} window${windowsLost > 1 ? 's' : ''} entirely.` : ''),
+      action: () => {
+        setSelectedTabIds(new Set());
+        setSelectMode(false);
+        closeTabsWithUndo(
+          ids,
+          `Closed ${ids.length} tab${ids.length > 1 ? 's' : ''}, kept ${keptCount}` +
+          (pinnedSkipped > 0 ? ` and ${pinnedSkipped} pinned` : '')
+        );
+      },
+    });
+  }, [othersToClose, filteredAllTabs, selectedTabIds, countWindowsLost, closeTabsWithUndo]);
+
+  // Right-click "Close other tabs". Same rules as the bulk "Close rest" above —
+  // pinned tabs survive, focus-mode hidden tabs are untouched, always confirms —
+  // but scoped to the clicked tab's own window.
+  const handleCloseOthersInWindow = useCallback((tabId, windowId) => {
+    const win = filteredWindows.find(w => w.id === windowId);
+    if (!win) return;
+    const ids = win.tabs.filter(t => t.id !== tabId && !t.pinned).map(t => t.id);
+    if (ids.length === 0) { toast.info('No other tabs to close in this window'); return; }
+    const pinnedSkipped = win.tabs.filter(t => t.id !== tabId && t.pinned).length;
+    setConfirmPending({
+      message: `Close ${ids.length} other tab${ids.length > 1 ? 's' : ''} in this window?`,
+      action: () => closeTabsWithUndo(
+        ids,
+        `Closed ${ids.length} tab${ids.length > 1 ? 's' : ''}` +
+        (pinnedSkipped > 0 ? `, kept ${pinnedSkipped} pinned` : '')
+      ),
+    });
+  }, [filteredWindows, closeTabsWithUndo]);
 
   const handleDuplicate = useCallback((tabId) => {
     tabs.duplicateTab(tabId);
@@ -310,7 +386,7 @@ export function Sidebar({ onCollapse }) {
     onDuplicate: handleDuplicate,
     onMoveToWindow: tabs.moveTab,
     onMoveToNewWindow: tabs.moveTabToNewWindow,
-    onCloseOthers: tabs.closeOtherTabs,
+    onCloseOthers: handleCloseOthersInWindow,
     onCloseToRight: tabs.closeTabsToRight,
     onReorderTab: tabs.reorderTab,
     onMoveTab: tabs.moveTab,
@@ -480,7 +556,7 @@ export function Sidebar({ onCollapse }) {
 
         {/* Bulk action bar */}
         {selectMode && (
-          <div className="px-2.5 py-1.5 bg-primary/[0.08] border-b border-primary/20 flex items-center gap-2.5" data-testid="bulk-action-bar">
+          <div className="px-2.5 py-1.5 bg-primary/[0.08] border-b border-primary/20 flex flex-wrap items-center gap-2.5" data-testid="bulk-action-bar">
             {/* Select all / deselect all checkbox */}
             <button
               onClick={selectedTabIds.size === filteredAllTabs.length ? deselectAllTabs : selectAllTabs}
@@ -517,12 +593,25 @@ export function Sidebar({ onCollapse }) {
             <button
               onClick={handleBulkClose}
               disabled={selectedTabIds.size === 0}
-              className="cursor-pointer flex items-center gap-1 text-[10px] font-heading font-semibold text-destructive hover:text-destructive/80
+              className="cursor-pointer shrink-0 whitespace-nowrap flex items-center gap-1 text-[10px] font-heading font-semibold text-destructive hover:text-destructive/80
                 disabled:opacity-40 disabled:cursor-not-allowed transition-colors px-2 py-1 rounded-md bg-destructive/10 hover:bg-destructive/15"
               data-testid="bulk-close-btn"
             >
               <Trash2 size={11} strokeWidth={2} />
               Close {selectedTabIds.size}
+            </button>
+            <button
+              onClick={handleCloseOthers}
+              disabled={selectedTabIds.size === 0 || othersToClose.length === 0}
+              className="cursor-pointer shrink-0 whitespace-nowrap flex items-center gap-1 text-[10px] font-heading font-semibold text-destructive hover:text-destructive/80
+                disabled:opacity-40 disabled:cursor-not-allowed transition-colors px-2 py-1 rounded-md bg-destructive/10 hover:bg-destructive/15"
+              data-testid="bulk-close-others-btn"
+              title={selectedTabIds.size === 0
+                ? 'Select the tabs you want to keep first'
+                : `Keep the ${selectedTabIds.size} selected tab${selectedTabIds.size > 1 ? 's' : ''} and close the other ${othersToClose.length} (pinned tabs are kept)`}
+            >
+              <ListX size={11} strokeWidth={2} />
+              Close rest{othersToClose.length > 0 ? ` (${othersToClose.length})` : ''}
             </button>
           </div>
         )}
@@ -594,7 +683,7 @@ export function Sidebar({ onCollapse }) {
                           onDuplicate={handleDuplicate}
                           onMoveToNewWindow={tabs.moveTabToNewWindow}
                           onMoveToWindow={tabs.moveTab}
-                          onCloseOthers={tabs.closeOtherTabs}
+                          onCloseOthers={handleCloseOthersInWindow}
                           onCloseToRight={tabs.closeTabsToRight}
                           onSuspend={tabs.suspendTab}
                           onUnsuspend={tabs.unsuspendTab}

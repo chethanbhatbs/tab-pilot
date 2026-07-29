@@ -13,6 +13,23 @@ export function isExtensionContext() {
   return IS_EXTENSION;
 }
 
+/**
+ * Single source of truth for the version shown in the UI. In the packaged
+ * extension it comes straight from manifest.json; in the web build it comes from
+ * REACT_APP_VERSION (build-extension.sh injects it from the same manifest).
+ * Returns null when neither is available so callers can hide the badge rather
+ * than print a stale number.
+ */
+export function getAppVersion() {
+  if (IS_EXTENSION) {
+    try {
+      const v = chrome.runtime?.getManifest?.()?.version;
+      if (v) return v;
+    } catch { /* fall through */ }
+  }
+  return process.env.REACT_APP_VERSION || null;
+}
+
 // --- Real Chrome API wrappers ---
 
 /**
@@ -84,6 +101,13 @@ export async function chromeCloseTab(tabId) {
   await chrome.tabs.remove(tabId);
 }
 
+/** Close many tabs in one call instead of one round-trip per tab. */
+export async function chromeCloseTabs(tabIds) {
+  if (!tabIds || tabIds.length === 0) return 0;
+  await chrome.tabs.remove(tabIds);
+  return tabIds.length;
+}
+
 export async function chromePinTab(tabId, pinned) {
   await chrome.tabs.update(tabId, { pinned });
 }
@@ -126,14 +150,32 @@ export async function chromeMinimizeWindow(windowId, currentState) {
 }
 
 export async function chromeUndoCloseTab() {
+  return (await chromeUndoCloseTabs(1)) > 0;
+}
+
+/**
+ * Undo a bulk close: restore the most recently closed sessions until roughly
+ * `tabCount` tabs are back. Chrome may record a batch close as one window entry
+ * rather than N tab entries, so we count each entry's own tabs and stop as soon
+ * as the target is met — otherwise an undo of 10 could drag back older closures
+ * the user never asked for. Chrome caps getRecentlyClosed at 25 entries.
+ * Returns the approximate number of tabs restored.
+ */
+export async function chromeUndoCloseTabs(tabCount = 1) {
+  const want = Math.max(1, Math.min(tabCount, 25));
+  let restoredTabs = 0;
   try {
-    const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: 1 });
-    if (sessions.length > 0) {
-      const sessionId = sessions[0].tab?.sessionId || sessions[0].window?.sessionId;
-      if (sessionId) { await chrome.sessions.restore(sessionId); return true; }
+    const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: want });
+    for (const s of sessions) {
+      if (restoredTabs >= tabCount) break;
+      const sessionId = s.tab?.sessionId || s.window?.sessionId;
+      if (!sessionId) continue;
+      const size = s.window?.tabs?.length || 1;
+      // One bad session id must not abort the rest of the restore.
+      try { await chrome.sessions.restore(sessionId); restoredTabs += size; } catch { /* skip */ }
     }
   } catch { /* sessions API unavailable */ }
-  return false;
+  return restoredTabs;
 }
 
 // Storage helpers for persisting notes and window names

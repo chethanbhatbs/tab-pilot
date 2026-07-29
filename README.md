@@ -46,6 +46,12 @@ Toggle between window-based and domain-based views. Sites view groups all tabs b
 ### Multi-Select & Bulk Close
 Click the **Select** button in the toolbar to enter selection mode. Checkboxes appear on every tab. Select individual tabs, select all in a window, or select all. Then bulk-close them in one click. A floating action bar shows the count and provides Select All / Clear / Close actions.
 
+Two ways to close from the action bar:
+- **Close N** — closes the tabs you selected.
+- **Close rest (N)** — the inverse: keeps the tabs you selected and closes everything else. Handy when you only want to keep two tabs out of fifty. It always asks for confirmation first, and the prompt tells you if any window will disappear entirely.
+
+Both show an **Undo** in the toast afterwards, and both keep pinned tabs and tabs hidden by Focus Mode. Right-clicking a tab and choosing **Close other tabs** follows the same rules, scoped to that tab's window.
+
 ### Focus Mode
 Pick the tabs you want to concentrate on and start a focus session. Focus Mode is **non-destructive**, it never closes your content tabs or windows:
 - Your focus set stands out; other tabs are dimmed / grouped

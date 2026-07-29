@@ -105,7 +105,7 @@ export function HelpPanel({ onBack }) {
           <FeatureItem icon={Eye} text="Gently nudges you back if you stray — nothing is closed" />
           <FeatureItem icon={Copy} text="Select mode for bulk-closing multiple tabs at once" />
           <FeatureItem icon={Trash2} text={'"Close rest" keeps the tabs you selected and closes everything else (pinned tabs stay)'} />
-          <FeatureItem icon={Pause} text="Suspend inactive tabs to free memory" />
+          <FeatureItem icon={Pause} text="Suspend background tabs (everything except the one you are on) to free memory" />
         </div>
       </Section>
 

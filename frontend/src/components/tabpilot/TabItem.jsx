@@ -61,7 +61,7 @@ function TabItemImpl({
               ? 'bg-primary/[0.16] text-foreground font-medium'
               : 'hover:bg-[hsl(var(--hover-subtle))] text-foreground/75'
             }
-            ${isSuspended ? 'opacity-35' : ''}
+            ${isSuspended ? 'opacity-60' : ''}
           `}
         >
 

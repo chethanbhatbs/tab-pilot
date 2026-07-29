@@ -268,7 +268,7 @@ export function useChromeTabs() {
   // loading, playing media, and so on), so the two numbers can differ and the
   // caller needs both to say something truthful. Only the tabs Chrome actually
   // discarded go into the optimistic overlay.
-  const suspendInactive = useCallback(async () => {
+  const suspendBackgroundTabs = useCallback(async () => {
     const toSuspend = [];
     windows.forEach(w => w.tabs?.forEach(t => {
       if (!t.active && !t.pinned && !t.audible && !t.discarded) toSuspend.push(t.id);
@@ -319,7 +319,7 @@ export function useChromeTabs() {
     createNewTab, createTabInWindow, createNewWindow, renameWindow,
     muteAll, unmuteAll, closeDuplicates,
     reorderTab, closeTabsToRight,
-    suspendTab, unsuspendTab, suspendInactive, unsuspendAll,
+    suspendTab, unsuspendTab, suspendBackgroundTabs, unsuspendAll,
     setTabNote, refresh, restoreSession, hideTabs, unhideTabs,
   };
 }

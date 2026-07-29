@@ -172,7 +172,7 @@ function DomainTabItem({ tab, compact, highlightText, onSwitch, onClose, suspend
           ? 'bg-primary/[0.10] text-foreground'
           : 'hover:bg-[hsl(var(--hover-subtle))] text-foreground/75'
         }
-        ${suspended ? 'opacity-35' : ''}
+        ${suspended ? 'opacity-60' : ''}
         ${isSelected ? 'bg-primary/[0.08]' : ''}
       `}
     >

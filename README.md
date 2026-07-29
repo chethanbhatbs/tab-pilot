@@ -80,7 +80,9 @@ Save collections of tabs as named workspaces. Create workspaces like "Dev", "Res
 Snapshot your entire browser state (all windows and tabs) with a name. Restore any saved session later to reopen everything exactly as it was. View the tab list inside any session before restoring. Duplicate session names are prevented.
 
 ### Tab Suspension
-Suspend inactive tabs to free up memory. Suspended tabs remain in the sidebar but are visually dimmed. Suspend all inactive tabs at once, or suspend/unsuspend individual tabs via right-click. The stats bar shows the current suspended count.
+Suspend background tabs to free up memory. **Suspend background tabs** in the Advanced menu suspends every tab that is not the foreground tab of its window, skipping pinned tabs, tabs playing audio, and tabs Chrome refuses to discard. You can also suspend or unsuspend individual tabs via right-click.
+
+Suspended tabs stay in the sidebar, dimmed, with a pause icon in place of the favicon. They are not closed: clicking one reloads it and it returns to normal. The stats bar shows the current suspended count.
 
 ### Auto-Close Rules
 Set time-based rules to automatically close idle tabs. Choose from presets (15min, 30min, 1hr, 2hr) or set a custom timer. Whitelist specific domains (e.g., `mail.google.com`) to keep them safe, subdomain-aware matching means whitelisting `google.com` also protects `docs.google.com`. The at-risk tab preview shows which tabs will be closed and how much time they have left. Tabs are **actually auto-closed** when their inactivity timer expires, with a toast notification for each closed tab. Tab activity is tracked in real time, switching to a tab immediately removes it from the at-risk list.

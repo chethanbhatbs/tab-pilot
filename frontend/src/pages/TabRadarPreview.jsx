@@ -237,7 +237,7 @@ function FeatureGrid() {
     { icon: Focus, color: 'text-violet-400', bg: 'bg-violet-400/10', title: 'Focus Mode',
       desc: 'Pick your focus tabs, start a timer, and everything else fades away. Distraction-free deep work.' },
     { icon: Pause, color: 'text-amber-400', bg: 'bg-amber-400/10', title: 'Tab Suspension',
-      desc: 'Reclaim memory by suspending inactive tabs. They stay in your tree but free up system resources.' },
+      desc: 'Reclaim memory by suspending background tabs. They stay in your tree but free up system resources.' },
     { icon: Layers, color: 'text-orange-400', bg: 'bg-orange-400/10', title: 'Duplicate Detection',
       desc: 'Spots URLs open in multiple tabs and highlights them. Close extras with one click, keeping one of each.' },
     { icon: Briefcase, color: 'text-sky-400', bg: 'bg-sky-400/10', title: 'Smart Workspaces',

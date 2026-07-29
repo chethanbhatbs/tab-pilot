@@ -22,7 +22,7 @@ FIND & SWITCH
 CLEAN UP
 - One-click duplicate detection and close (smart matching treats different views of the same Google Doc/Sheet as duplicates)
 - Multi-select and bulk close
-- Suspend inactive tabs to free memory
+- Suspend background tabs to free memory
 - Auto-close idle tabs on a timer, with a domain whitelist
 
 FOCUS

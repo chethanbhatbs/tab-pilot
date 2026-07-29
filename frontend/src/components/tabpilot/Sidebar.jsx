@@ -300,20 +300,23 @@ export function Sidebar({ onCollapse }) {
     setViewMode('window');
   }, []);
 
-  // suspendInactive is async — without the await this compared a Promise to 0 and
-  // always reported "No inactive tabs to suspend", even after suspending tabs.
-  const handleSuspendInactive = useCallback(async () => {
-    const { attempted, suspended } = await tabs.suspendInactive();
+  // "Background" is literal: every tab that is not the foreground one in its
+  // window. It used to be called "inactive", which read as "idle for a while" and
+  // made suspending 15 of 16 tabs look like a bug.
+  // Note the await — without it this compared a Promise to 0 and always claimed
+  // there was nothing to suspend, even right after suspending tabs.
+  const handleSuspendBackground = useCallback(async () => {
+    const { attempted, suspended } = await tabs.suspendBackgroundTabs();
     if (suspended > 0) {
       const refused = attempted - suspended;
       toast.success(
-        `Suspended ${suspended} inactive tab${suspended > 1 ? 's' : ''}` +
+        `Suspended ${suspended} background tab${suspended > 1 ? 's' : ''}` +
         (refused > 0 ? `, ${refused} could not be suspended` : '')
       );
     } else if (attempted > 0) {
       toast.info(`Chrome would not suspend ${attempted === 1 ? 'that tab' : 'any of those tabs'} right now`);
     } else {
-      toast.info('No inactive tabs to suspend');
+      toast.info('No background tabs to suspend');
     }
   }, [tabs]);
 
@@ -345,7 +348,7 @@ export function Sidebar({ onCollapse }) {
     onToggleGrouping: handleToggleGrouping,
     onToggleHeatmap: handleToggleHeatmap,
     onToggleFocus: handleToggleFocus,
-    onSuspendInactive: handleSuspendInactive,
+    onSuspendBackground: handleSuspendBackground,
     onUnsuspendAll: handleUnsuspendAll,
   };
 
@@ -421,7 +424,7 @@ export function Sidebar({ onCollapse }) {
     { id: 'autoclose', icon: Timer, label: 'Auto-Close', onClick: () => setActivePanel('autoclose') },
     { id: 'sep1' },
     { type: 'label', text: 'Tab actions' },
-    { id: 'suspend', icon: Pause, label: 'Suspend inactive', onClick: quickActionHandlers.onSuspendInactive },
+    { id: 'suspend', icon: Pause, label: 'Suspend background tabs', onClick: quickActionHandlers.onSuspendBackground },
     { id: 'resume', icon: Play, label: 'Resume all', onClick: quickActionHandlers.onUnsuspendAll },
     { id: 'mute', icon: VolumeX, label: 'Mute all', onClick: quickActionHandlers.onMuteAll },
     { id: 'unmute', icon: Volume2, label: 'Unmute all', onClick: quickActionHandlers.onUnmuteAll },
